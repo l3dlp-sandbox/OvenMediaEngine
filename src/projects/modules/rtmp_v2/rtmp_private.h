@@ -3,12 +3,9 @@
 //  OvenMediaEngine
 //
 //  Created by Hyunjun Jang
-//  Copyright (c) 2019 AirenSoft. All rights reserved.
+//  Copyright (c) 2025 AirenSoft. All rights reserved.
 //
 //==============================================================================
-#include "./queue.h"
+#pragma once
 
-namespace ov
-{
-    
-}
+#define OV_LOG_TAG "Modules.RTMPv2"

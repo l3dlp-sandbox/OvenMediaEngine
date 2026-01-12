@@ -179,7 +179,7 @@ bool TranscodeFilter::IsNeedUpdate(std::shared_ptr<MediaFrame> buffer)
 	bool is_abnormal = (last_timestamp != -1LL && diff_timestamp > _timestamp_jump_threshold) ? true : false;
 	if (is_abnormal)
 	{
-		logtw("The timestamp has changed unexpectedly. %lld -> %lld (%lld > %lld)", last_timestamp, buffer->GetPts(), diff_timestamp, _timestamp_jump_threshold);
+		logtw("Timestamp has changed unexpectedly. last:%lld, curr:%lld diff:%lld, expect:%lld", last_timestamp, buffer->GetPts(), diff_timestamp, _timestamp_jump_threshold);
 		return true;
 	}
 

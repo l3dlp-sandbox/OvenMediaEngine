@@ -514,6 +514,7 @@ bool TranscodeEncoder::PushProcess(std::shared_ptr<const MediaFrame> media_frame
 		return true;
 	}
 
+	// Convert MediaFrame to AVFrame
 	auto av_frame = ffmpeg::compat::ToAVFrame(GetRefTrack()->GetMediaType(), media_frame);
 	if (!av_frame)
 	{
@@ -540,10 +541,27 @@ bool TranscodeEncoder::PushProcess(std::shared_ptr<const MediaFrame> media_frame
 		}
 	}
 
+	// Send the frame to the encoder
 	int ret = ::avcodec_send_frame(_codec_context, av_frame);
-	if (ret < 0)
+	if (ret == AVERROR(EAGAIN))
 	{
-		logte("Error sending a frame for encoding : %d", ret);
+		logtw("Encoder internal buffer is full, need to flush packets.");
+	}
+	else if (ret == AVERROR_INVALIDDATA)
+	{
+		logtw("Invalid data while sending a frame for encoding.");
+	}
+	else if (ret == AVERROR(ENOMEM))
+	{
+		logte("Could not allocate memory while sending a frame for encoding.");
+
+		Complete(TranscodeResult::DataError, nullptr);
+
+		return false;
+	}
+	else if (ret < 0)
+	{
+		logte("Error sending a frame for encoding. reason(%s)", ffmpeg::compat::AVErrorToString(ret).CStr());
 
 		Complete(TranscodeResult::DataError, nullptr);
 
@@ -561,6 +579,19 @@ bool TranscodeEncoder::PopProcess()
 	if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
 	{
 		// There is no more remain frame.
+		return false;
+	}
+	else if (ret == AVERROR_INVALIDDATA)
+	{
+		logtw("Invalid data while receiving a packet for encoding.");
+
+		return false;
+	}
+	else if (ret == AVERROR(ENOMEM))
+	{
+		logtw("Could not allocate memory while receiving a packet for encoding.");
+		Complete(TranscodeResult::DataError, nullptr);
+
 		return false;
 	}
 	else if (ret < 0)

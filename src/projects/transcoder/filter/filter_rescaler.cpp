@@ -507,7 +507,30 @@ bool FilterRescaler::PushProcess(std::shared_ptr<MediaFrame> media_frame)
 	AVFrame *av_frame_for_filter = (transfer_av_frame != nullptr) ? transfer_av_frame : av_frame;
 
 	// Send to filtergraph
-	if (::av_buffersrc_write_frame(_buffersrc_ctx, av_frame_for_filter))
+	int ret = ::av_buffersrc_write_frame(_buffersrc_ctx, av_frame_for_filter);
+	if (ret == AVERROR_EOF)
+	{
+		logtw("filter graph has been flushed and will not accept any more frames.");
+	}
+	else if (ret == AVERROR(EAGAIN))
+	{
+		logtw("filter graph is not able to accept the frame at this time.");
+	}
+	else if (ret == AVERROR_INVALIDDATA)
+	{
+		logtw("Invalid data while sending to filtergraph");
+	}
+	else if (ret == AVERROR(ENOMEM))
+	{
+		logte("Could not allocate memory while sending to filtergraph");
+		
+		SetState(State::ERROR);
+
+		Complete(TranscodeResult::DataError, nullptr);
+		
+		return false;
+	}
+	else if (ret < 0)
 	{
 		logte("An error occurred while feeding to filtergraph: format: %d, pts: %lld, queue.size: %d", av_frame->format, av_frame->pts, _input_buffer.Size());
 
@@ -518,6 +541,7 @@ bool FilterRescaler::PushProcess(std::shared_ptr<MediaFrame> media_frame)
 		return false;
 	}
 
+	// Free the temporary AVFrame used for transfer
 	if (transfer_av_frame != nullptr)
 	{
 		av_frame_free(&transfer_av_frame);
@@ -541,48 +565,59 @@ bool FilterRescaler::PopProcess(bool is_flush)
 		{
 			break;
 		}
+		else if (ret == AVERROR_INVALIDDATA)
+		{
+			logtw("Invalid data while receiving from filtergraph");
+			break;
+		}
 		else if (ret == AVERROR_EOF)
 		{
-			if(is_flush)
-			{
+			if (is_flush)
 				break;
-			}
-			
+
 			logte("Error receiving filtered frame. error(EOF)");
+
 			SetState(State::ERROR);
 
 			return false;
 		}
-		else if (ret < 0)
+		else if (ret == AVERROR(ENOMEM))
 		{
-			if(is_flush)
-			{
-				break;
-			}
+			logte("Could not allocate memory while receiving from filtergraph");
 
-			logte("Error receiving filtered frame. error(%s)", ffmpeg::compat::AVErrorToString(ret).CStr());
 			SetState(State::ERROR);
 
 			Complete(TranscodeResult::DataError, nullptr);
 
 			return false;
 		}
-		else
+		else if (ret < 0)
 		{
-			_frame->pict_type = AV_PICTURE_TYPE_NONE;
-			auto output_frame = ffmpeg::compat::ToMediaFrame(cmn::MediaType::Video, _frame);
-			::av_frame_unref(_frame);
-			if (output_frame == nullptr)
-			{
-				continue;
-			}
+			if (is_flush)
+				break;
 
-			// Convert duration to output track timebase
-			output_frame->SetDuration((int64_t)((double)output_frame->GetDuration() * _input_track->GetTimeBase().GetExpr() / _output_track->GetTimeBase().GetExpr()));
-			output_frame->SetSourceId(_source_id);
+			logte("Error receiving frame from filtergraph. error(%s)", ffmpeg::compat::AVErrorToString(ret).CStr());
+			
+			SetState(State::ERROR);
 
-			Complete(TranscodeResult::DataReady, std::move(output_frame));
+			Complete(TranscodeResult::DataError, nullptr);
+
+			return false;
 		}
+		
+		_frame->pict_type = AV_PICTURE_TYPE_NONE;
+		auto output_frame = ffmpeg::compat::ToMediaFrame(cmn::MediaType::Video, _frame);
+		::av_frame_unref(_frame);
+		if (output_frame == nullptr)
+		{
+			continue;
+		}
+
+		// Convert duration to output track timebase
+		output_frame->SetDuration((int64_t)((double)output_frame->GetDuration() * _input_track->GetTimeBase().GetExpr() / _output_track->GetTimeBase().GetExpr()));
+		output_frame->SetSourceId(_source_id);
+
+		Complete(TranscodeResult::DataReady, std::move(output_frame));
 	}
 
 	return true;

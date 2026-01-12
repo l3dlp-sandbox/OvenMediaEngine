@@ -136,12 +136,13 @@ void DecoderOPUS::CodecThread()
 					}
 					else if (ret == AVERROR_INVALIDDATA)
 					{
-						// Invalid data, skip this packet
+						logtw("[%s] Invalid data while sending a packet for decoding. track(%u), pts(%lld)",
+							  _stream_info.GetUri().CStr(), GetRefTrack()->GetId(), _pkt->pts);
 					}
 					else if (ret < 0)
 					{
 						_cur_data = nullptr;
-						logte("Error error occurred while sending a packet for decoding. reason(%s)", ffmpeg::compat::AVErrorToString(ret).CStr());
+						logte("Error occurred while sending a packet for decoding. reason(%s)", ffmpeg::compat::AVErrorToString(ret).CStr());
 
 						Complete(TranscodeResult::DataError, nullptr);
 					}
@@ -170,6 +171,11 @@ void DecoderOPUS::CodecThread()
 		if (ret == AVERROR(EAGAIN))
 		{
 			no_data_to_encode = true;
+			continue;
+		}
+		else if (ret == AVERROR_INVALIDDATA)
+		{
+			logtw("Invalid data while receiving a packet for decoding");
 			continue;
 		}
 		else if (ret < 0)

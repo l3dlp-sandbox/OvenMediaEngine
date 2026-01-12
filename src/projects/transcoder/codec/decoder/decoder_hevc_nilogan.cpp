@@ -165,6 +165,9 @@ void DecoderHEVCxNILOGAN::CodecThread()
 				}
 				else if (ret == AVERROR_INVALIDDATA)
 				{
+					logtw("[%s] Invalid data while sending a packet for decoding. track(%u), pts(%lld)",
+						  _stream_info.GetUri().CStr(), GetRefTrack()->GetId(), _pkt->pts);
+
 					// If a failure occurs due to the absence of a decoder configuration, 
 					// an Empty frame is created and transmitted. 
 					// This is used to replace a failed frame.
@@ -178,7 +181,7 @@ void DecoderHEVCxNILOGAN::CodecThread()
 				}
 				else if (ret < 0)
 				{
-					logte("Error error occurred while sending a packet for decoding. reason(%s)", ffmpeg::compat::AVErrorToString(ret).CStr());
+					logte("Error occurred while sending a packet for decoding. reason(%s)", ffmpeg::compat::AVErrorToString(ret).CStr());
 
 					Complete(TranscodeResult::DataError, nullptr);
 
@@ -196,6 +199,14 @@ void DecoderHEVCxNILOGAN::CodecThread()
 			int ret = ::avcodec_receive_frame(_codec_context, _frame);
 			if (ret == AVERROR(EAGAIN))
 			{
+				break;
+			}
+			else if (ret == AVERROR_INVALIDDATA) 
+			{
+				logtw("Invalid data while receiving a packet for decoding");
+
+				Complete(TranscodeResult::NoData, nullptr);
+
 				break;
 			}
 			else if (ret < 0)

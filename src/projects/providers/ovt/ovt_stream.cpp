@@ -441,6 +441,9 @@ namespace pvd
 
 			new_track->SetId(json_track["id"].asUInt());
 			new_track->SetVariantName(json_track["name"].asString().c_str());
+			new_track->SetPublicName(json_track["publicName"].asString().c_str());
+			new_track->SetLanguage(json_track["language"].asString().c_str());
+			new_track->SetCharacteristics(json_track["characteristics"].asString().c_str());
 			new_track->SetCodecId(static_cast<cmn::MediaCodecId>(json_track["codecId"].asUInt()));
 			new_track->SetMediaType(static_cast<cmn::MediaType>(json_track["mediaType"].asUInt()));
 			new_track->SetTimeBase(json_track["timebaseNum"].asUInt(), json_track["timebaseDen"].asUInt());
@@ -462,6 +465,8 @@ namespace pvd
 				new_track->SetFrameRateByConfig(json_video_track["framerate"].asDouble());
 				new_track->SetWidth(json_video_track["width"].asUInt());
 				new_track->SetHeight(json_video_track["height"].asUInt());
+				new_track->SetMaxWidth(json_video_track["maxWidth"].asUInt());
+				new_track->SetMaxHeight(json_video_track["maxHeight"].asUInt());
 			}
 			else if (new_track->GetMediaType() == cmn::MediaType::Audio)
 			{

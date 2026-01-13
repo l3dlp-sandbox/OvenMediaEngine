@@ -152,6 +152,9 @@ bool OvtStream::GenerateDescription()
 
 		json_track["id"] = track->GetId();
 		json_track["name"] = track->GetVariantName().CStr();
+		json_track["publicName"] = track->GetPublicName().CStr();
+		json_track["language"] = track->GetLanguage().CStr();
+		json_track["characteristics"] = track->GetCharacteristics().CStr();
 		json_track["codecId"] = static_cast<int8_t>(track->GetCodecId());
 		json_track["mediaType"] = static_cast<int8_t>(track->GetMediaType());
 		json_track["timebaseNum"] = track->GetTimeBase().GetNum();
@@ -163,6 +166,8 @@ bool OvtStream::GenerateDescription()
 		json_video_track["framerate"] = track->GetFrameRate();
 		json_video_track["width"] = track->GetWidth();
 		json_video_track["height"] = track->GetHeight();
+		json_video_track["maxWidth"] = track->GetMaxWidth();
+		json_video_track["maxHeight"] = track->GetMaxHeight();
 
 		json_audio_track["samplerate"] = track->GetSampleRate();
 		json_audio_track["sampleFormat"] = static_cast<int8_t>(track->GetSample().GetFormat());

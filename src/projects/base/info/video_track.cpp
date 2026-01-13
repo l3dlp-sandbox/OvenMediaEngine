@@ -45,6 +45,11 @@ void VideoTrack::SetWidth(int32_t width)
 	}
 }
 
+void VideoTrack::SetMaxWidth(int32_t max_width)
+{
+	_max_width = max_width;
+}
+
 int32_t VideoTrack::GetWidth() const
 {
 	return _width;
@@ -63,6 +68,11 @@ void VideoTrack::SetHeight(int32_t height)
 	{
 		_max_height = height;
 	}
+}
+
+void VideoTrack::SetMaxHeight(int32_t max_height)
+{
+	_max_height = max_height;
 }
 
 int32_t VideoTrack::GetHeight() const

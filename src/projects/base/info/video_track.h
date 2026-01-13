@@ -32,6 +32,7 @@ public:
 	double GetFrameRateByConfig() const;
 
 	void SetWidth(int32_t width);
+	void SetMaxWidth(int32_t max_width); // for ovt sync
 	int32_t GetWidth() const;
 	int32_t GetMaxWidth() const;
 
@@ -39,6 +40,7 @@ public:
 	int32_t GetWidthByConfig() const;
 
 	void SetHeight(int32_t height);
+	void SetMaxHeight(int32_t max_height);
 	int32_t GetHeight() const;
 	int32_t GetMaxHeight() const;
 

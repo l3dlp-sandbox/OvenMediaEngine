@@ -81,9 +81,11 @@ bool MediaTrack::Update(const MediaTrack &media_track)
 
 	_width = media_track._width;
 	_width_conf  = media_track._width_conf;
+	_max_width = media_track._max_width;
 	
 	_height = media_track._height;
 	_height_conf = media_track._height_conf;
+	_max_height = media_track._max_height;
 
 	// Audio
 	_sample = media_track._sample;

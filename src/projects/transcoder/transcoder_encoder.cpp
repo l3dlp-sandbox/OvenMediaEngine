@@ -652,7 +652,14 @@ void TranscodeEncoder::CodecThread()
 		// Insert keyframe in first frame
 		_accumulate_frame_duration		 = -1;
 
-		logti("Force keyframe by time interval is enabled. interval(%lld ms)", key_frame_interval_ms);
+		if (key_frame_interval_ms > 0 && key_frame_interval_ms < 500) // 500ms 
+		{
+			logtw("Force keyframe interval(by time) is enabled. but, interval is too short (%.0f ms). It may cause quality issues.", key_frame_interval_ms);
+		}
+		else
+		{
+			logti("Force keyframe interval(by time) is enabled. interval(%.0fms)", key_frame_interval_ms);
+		}
 	}
 	else
 	{

@@ -250,6 +250,8 @@ std::shared_ptr<MediaTrack> TranscoderStreamInternal::CreateOutputTrack(
 		output_track->SetCodecId(input_track->GetCodecId());
 		output_track->SetCodecModules(input_track->GetCodecModules());
 		output_track->SetCodecModuleId(input_track->GetCodecModuleId());
+		output_track->SetMaxWidth(input_track->GetMaxWidth());
+		output_track->SetMaxHeight(input_track->GetMaxHeight());
 		output_track->SetWidth(input_track->GetWidth());
 		output_track->SetHeight(input_track->GetHeight());
 		output_track->SetTimeBase(input_track->GetTimeBase());
@@ -530,6 +532,8 @@ std::shared_ptr<MediaTrack> TranscoderStreamInternal::CreateOutputTrackDataType(
 	output_track->SetCodecModules("");
 	output_track->SetCodecModuleId(input_track->GetCodecModuleId());
 	output_track->SetOriginBitstream(input_track->GetOriginBitstream());
+	output_track->SetMaxWidth(input_track->GetMaxWidth());
+	output_track->SetMaxHeight(input_track->GetMaxHeight());
 	output_track->SetWidth(input_track->GetWidth());
 	output_track->SetHeight(input_track->GetHeight());
 	output_track->SetFrameRateByMeasured(input_track->GetFrameRate());

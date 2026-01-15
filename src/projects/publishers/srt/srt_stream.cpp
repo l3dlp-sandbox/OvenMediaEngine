@@ -385,6 +385,9 @@ namespace pub
 			playlist->Stop();
 		}
 
+		_srt_playlist_map_by_file_name.clear();
+		_srt_playlist_map_by_track_id.clear();
+
 		auto result = Stream::Stop();
 
 		if (result)
@@ -442,7 +445,7 @@ namespace pub
 	}
 
 	void SrtStream::OnSrtPlaylistData(
-		const std::shared_ptr<SrtPlaylist> &playlist,
+		const std::weak_ptr<SrtPlaylist> &playlist,
 		const std::shared_ptr<const ov::Data> &data)
 	{
 		auto srt_data = std::make_shared<const SrtData>(playlist, data);

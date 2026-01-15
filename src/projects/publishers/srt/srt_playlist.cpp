@@ -52,14 +52,12 @@ namespace pub
 
 	bool SrtPlaylist::Start()
 	{
-		_packetizer->AddSink(GetSharedPtrAs<mpegts::PacketizerSink>());
-
-		return _packetizer->Start();
+		return _packetizer->AddSink(GetSharedPtrAs<mpegts::PacketizerSink>()) && _packetizer->Start();
 	}
 
 	bool SrtPlaylist::Stop()
 	{
-		return _packetizer->Stop();
+		return _packetizer->Stop() && _packetizer->RemoveSink(GetSharedPtrAs<mpegts::PacketizerSink>());
 	}
 
 	void SrtPlaylist::EnqueuePacket(const std::shared_ptr<MediaPacket> &media_packet)
@@ -97,7 +95,7 @@ namespace pub
 
 		for (auto &packet : packets)
 		{
-			auto size = _data_to_send->GetLength();
+			auto size		 = _data_to_send->GetLength();
 			const auto &data = packet->GetData();
 
 			// Broadcast if the data size exceeds the SRT's payload length

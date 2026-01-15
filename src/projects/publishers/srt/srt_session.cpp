@@ -96,7 +96,7 @@ namespace pub
 
 		try
 		{
-			srt_data = std::any_cast<std::shared_ptr<const SrtData>>(packet);
+			return std::any_cast<std::shared_ptr<const SrtData>>(packet);
 		}
 		catch (const std::bad_any_cast &e)
 		{
@@ -105,8 +105,6 @@ namespace pub
 			OV_ASSERT2(false);
 			return nullptr;
 		}
-
-		return (srt_data->playlist == _srt_playlist) ? srt_data : nullptr;
 	}
 
 	void SrtSession::SendOutgoingData(const std::any &packet)
@@ -119,12 +117,22 @@ namespace pub
 			return;
 		}
 
+		auto playlist = srt_data->playlist.lock();
+
+		if (
+			// The playlist has been destroyed
+			(playlist == nullptr) ||
+			(playlist != _srt_playlist))
+		{
+			return;
+		}
+
 		std::shared_ptr<const ov::Data> mpegts_data;
 
 		if (_need_to_send_psi)
 		{
 			_need_to_send_psi = false;
-			_connector->Send(srt_data->playlist->GetPsiData());
+			_connector->Send(playlist->GetPsiData());
 		}
 
 		mpegts_data = srt_data->data;

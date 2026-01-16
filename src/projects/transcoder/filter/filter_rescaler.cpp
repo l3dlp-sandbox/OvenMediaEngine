@@ -732,7 +732,7 @@ void FilterRescaler::WorkerThread()
 			{
 				_fps_filter.SetSkipFrames(skip_frames_conf);
 
-				logt("Changed skip frames to user config value: %d", _fps_filter.GetSkipFrames());
+				logti("Changed skip frames to user config value: %d", _fps_filter.GetSkipFrames());
 			}
 		}
 		else  // if (skip_frames_conf < 0)

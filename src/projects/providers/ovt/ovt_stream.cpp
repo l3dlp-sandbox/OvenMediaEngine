@@ -251,7 +251,7 @@ namespace pvd
 		}
 
 		// Parsing Payload
-		ov::String payload = data->GetDataAs<char>();
+		ov::String payload(data->GetDataAs<char>(), data->GetLength());
 		ov::JsonObject object = ov::Json::Parse(payload);
 
 		if (object.IsNull())

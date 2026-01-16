@@ -19,9 +19,19 @@ FilterFps::FilterFps()
 	_output_framerate = 0;
 	_skip_frames = 0;
 
+	_curr_pts = AV_NOPTS_VALUE;
 	_next_pts = AV_NOPTS_VALUE;
+	_last_input_pts = AV_NOPTS_VALUE;
+	_last_input_scaled_pts = AV_NOPTS_VALUE;
 
-	stat_output_frame_count = 0;
+	_stat_ideal_output_frame_count = 0;
+	_stat_actual_output_frame_count = 0;
+	_stat_input_frame_count = 0;
+	_stat_skip_frame_count = 0;
+	_stat_duplicate_frame_count = 0;
+	_stat_discard_frame_count = 0;
+	_last_stat_output_frame_count = 0;
+	_stat_output_frame_per_second = 0.0;
 }
 
 FilterFps::~FilterFps()
@@ -35,6 +45,8 @@ void FilterFps::Clear()
 	{
 		_frames.clear();
 	}
+	
+	_timer.Stop();
 }
 
 void FilterFps::SetInputTimebase(cmn::Timebase timebase)
@@ -86,7 +98,7 @@ int32_t FilterFps::GetSkipFrames() const
 
 bool FilterFps::Push(std::shared_ptr<MediaFrame> media_frame)
 {
-	stat_input_frame_count++;
+	_stat_input_frame_count++;
 
 	if (_frames.size() >= 2)
 	{
@@ -148,8 +160,10 @@ std::shared_ptr<MediaFrame> FilterFps::Pop()
 		_next_pts++;
 
 		// Skip Frame
-		if ((_skip_frames > 0) && (stat_output_frame_count++ % (_skip_frames + 1) != 0))
+		_stat_ideal_output_frame_count++;
+		if ((_skip_frames > 0) && (_stat_ideal_output_frame_count % (_skip_frames + 1) != 0))
 		{
+			_stat_skip_frame_count++;
 			continue;
 		}
 
@@ -172,7 +186,27 @@ std::shared_ptr<MediaFrame> FilterFps::Pop()
 		int64_t duration = next_timebase_pts - curr_timebase_pts;
 		pop_frame->SetDuration(duration);
 
-		// logtd("Pop Frame. PTS(%lld), Next.PTS(%lld) -> PTS(%lld), Duration(%lld)", _frames[0]->GetPts(), _next_pts, pop_frame->GetPts(), pop_frame->GetDuration());
+		// Update FPS statistics every second
+		if (_timer.IsStart() == false)
+		{
+			_timer.Start();
+		}		
+		else if (_timer.IsElapsed(1000))
+		{
+			int elapsed_time = _timer.Elapsed();
+			_timer.Update();
+
+			_stat_actual_output_frame_count = _stat_ideal_output_frame_count - _stat_skip_frame_count;
+
+			// Calculate actual output frames per second
+			_stat_output_frame_per_second = (double)(_stat_actual_output_frame_count - _last_stat_output_frame_count) * (1000.0 / (double)elapsed_time);
+			
+			// logtd("stat: skip_frames:%d, ideal_output_frames:%lld, actual_output_frames:%lld, curr_fps:%.2f, average_fps:%.2f", 
+			// 	_skip_frames, _stat_ideal_output_frame_count, _stat_actual_output_frame_count, _stat_output_frame_per_second, 
+			// 	_stat_ideal_output_frame_count / (_timer.TotalElapsed() / 1000));
+
+			_last_stat_output_frame_count = _stat_actual_output_frame_count;
+		}
 
 		return pop_frame;
 	}
@@ -180,14 +214,29 @@ std::shared_ptr<MediaFrame> FilterFps::Pop()
 	return nullptr;
 }
 
+double FilterFps::GetOutputFramesPerSecond() const
+{
+	return _stat_output_frame_per_second;
+}
+
+double FilterFps::GetExpectedOutputFramesPerSecond() const
+{
+	if (_skip_frames < 0)
+	{
+		return _output_framerate;
+	}
+
+	return _output_framerate / (_skip_frames + 1);
+}
+
 ov::String FilterFps::GetStatsString()
 {
 	ov::String stat;
-	stat.Format("InputFrameCount: %lld\n", stat_input_frame_count);
-	stat.Append("OutputFrameCount: %lld\n", stat_output_frame_count);
-	stat.Append("SkipFrameCount: %lld\n", stat_skip_frame_count);
-	stat.Append("DuplicateFrameCount : %lld\n", stat_duplicate_frame_count);
-	stat.Append("DiscardFrameCount : %lld\n", stat_discard_frame_count);
+	stat.Format("InputFrameCount: %lld\n", _stat_input_frame_count);
+	stat.Append("OutputFrameCount: %lld\n", _stat_ideal_output_frame_count);
+	stat.Append("SkipFrameCount: %lld\n", _stat_skip_frame_count);
+	stat.Append("DuplicateFrameCount : %lld\n", _stat_duplicate_frame_count);
+	stat.Append("DiscardFrameCount : %lld\n", _stat_discard_frame_count);
 
 	return stat;
 }

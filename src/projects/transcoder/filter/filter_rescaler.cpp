@@ -19,8 +19,8 @@
 #define FILTER_FLAG_HWFRAME_AWARE (1 << 0)
 
 #define _SKIP_FRAMES_ENABLED 1
-#define _SKIP_FRAMES_CHECK_INTERVAL 500 					// 500ms
-#define _SKIP_FRAMES_STABLE_FOR_RETRIEVE_INTERVAL 10000 	// 10s
+#define _SKIP_FRAMES_CHECK_INTERVAL 2000				 // 2s
+#define _SKIP_FRAMES_STABLE_FOR_RETRIEVE_INTERVAL 10000	 // 10s
 
 FilterRescaler::FilterRescaler()
 {
@@ -647,8 +647,9 @@ void FilterRescaler::WorkerThread()
 	
 
 	// Set initial Skip Frames
-	int32_t skip_frames = _output_track->GetSkipFramesByConfig();
-	size_t  skip_frames_previous_queue_size = 0;
+	int32_t skip_frames_conf = _output_track->GetSkipFramesByConfig();
+	int32_t skip_frames = skip_frames_conf;
+	
 #endif
 
 	// XMA devices expand the memory pool when processing the first frame filtering. 
@@ -667,52 +668,76 @@ void FilterRescaler::WorkerThread()
 		auto media_frame = std::move(obj.value());
 
 #if _SKIP_FRAMES_ENABLED 
-		// If the set value is greater than or equal to 0, the skip frame is automatically calculated.
-		// The skip frame is not less than the value set by the user.
-		if(_output_track->GetSkipFramesByConfig() >= 0)
+		// Dynamic skip frames adjustment
+		if (skip_frames_conf == 0)
 		{
-			auto curr_time = ov::Time::GetTimestampInMs();
+			auto curr_time			 = ov::Time::GetTimestampInMs();
 
 			// Periodically check the status of the queue
-			// If the queue exceeds an arbitrary threshold, increase the number of skip frames quickly
-			// If the queue is stable, slowly decrease the number of skip frames.
-			// If the queue exceeds the threshold, drop the frame.
-			auto elapsed_check_time = curr_time - skip_frames_last_check_time;
+			auto elapsed_check_time	 = curr_time - skip_frames_last_check_time;
 			auto elapsed_stable_time = curr_time - skip_frames_last_changed_time;
 
+			auto threshold_rate		 = 0.75f;
 			if (elapsed_check_time > _SKIP_FRAMES_CHECK_INTERVAL)
 			{
 				skip_frames_last_check_time = curr_time;
 
-				// The frame skip should not be more than 1 second.
-				if ((skip_frames < _output_track->GetFrameRateByConfig()) &&		   // Maximum 1 second
-					(_input_buffer.GetSize() > (_input_buffer.GetThreshold() / 4)) &&  // 25% of the threshold == 0.5s
-					(_input_buffer.GetSize() >= skip_frames_previous_queue_size))	   // The queue is growing
+				logtd("SkipFrames(%d), Current FPS(%.2f), Expected FPS(%.2f), Threshold FPS(%.2f), Queue(%d/%d)",
+					  skip_frames,
+					  _fps_filter.GetOutputFramesPerSecond(),
+					  _fps_filter.GetExpectedOutputFramesPerSecond(),
+					  _fps_filter.GetExpectedOutputFramesPerSecond() * threshold_rate,
+					  _input_buffer.GetSize(),
+					  _input_buffer.GetThreshold());
+
+				// If the queue is unstable, quickly increase the number of skip frames.
+				// Actual output fps is less than 75% of expected fps
+				if (_fps_filter.GetOutputFramesPerSecond() < (_fps_filter.GetExpectedOutputFramesPerSecond() * threshold_rate))
 				{
-					skip_frames++;
-					skip_frames_previous_queue_size = _input_buffer.GetSize();
 					skip_frames_last_changed_time = curr_time;
 
-					logtw("Scaler is unstable. changing skip frames %d to %d", skip_frames-1, skip_frames);
-				}
-				// If the queue is stable, slowly decrease the number of skip frames.
-				else if ((skip_frames > _output_track->GetSkipFramesByConfig()) &&
-						 (elapsed_stable_time > _SKIP_FRAMES_STABLE_FOR_RETRIEVE_INTERVAL) &&
-						 _input_buffer.GetSize() <= 1)
-				{
-					if (--skip_frames < 0)
+					// The frame skip should not be more than 1 second.
+					int32_t max_skip_frames		  = (int32_t)(_fps_filter.GetExpectedOutputFramesPerSecond() - 1);
+					if (++skip_frames > max_skip_frames)
 					{
-						skip_frames = 0;
+						skip_frames = max_skip_frames;
 					}
 
-					skip_frames_previous_queue_size = _input_buffer.GetSize();
-					skip_frames_last_changed_time = curr_time;
+					logtw("Scaler is unstable. changing skip frames %d to %d", skip_frames - 1, skip_frames);
+				}
+				// If the queue is stable, slowly decrease the number of skip frames.
+				else if ((skip_frames > 0) && (elapsed_stable_time > _SKIP_FRAMES_STABLE_FOR_RETRIEVE_INTERVAL))
+				{
+					// Queue is stable when there is only 1 or no frame in the queue
+					if (_input_buffer.GetSize() <= 1)
+					{
+						skip_frames_last_changed_time = curr_time;
 
-					logtd("Scaler is stable. changing skip frames %d to %d", skip_frames+1, skip_frames);
+						if (--skip_frames < 0)
+						{
+							skip_frames = 0;
+						}
+
+						logti("Scaler is stable. changing skip frames %d to %d", skip_frames + 1, skip_frames);
+					}
 				}
 
 				_fps_filter.SetSkipFrames(skip_frames);
 			}
+		}
+		// Static skip frames set by the user
+		else if (skip_frames_conf > 0)
+		{
+			if (_fps_filter.GetSkipFrames() != skip_frames_conf)
+			{
+				_fps_filter.SetSkipFrames(skip_frames_conf);
+
+				logt("Changed skip frames to user config value: %d", _fps_filter.GetSkipFrames());
+			}
+		}
+		else  // if (skip_frames_conf < 0)
+		{
+			// Disable skip frames
 		}
 
 		// If the user does not set the output Framerate, use the recommend framerate

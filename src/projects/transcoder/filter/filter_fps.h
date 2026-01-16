@@ -13,6 +13,7 @@
 #include "base/mediarouter/media_buffer.h"
 #include "base/mediarouter/media_type.h"
 #include "filter_base.h"
+#include "base/ovlibrary/ovlibrary.h"
 
 class FilterFps 
 {
@@ -33,6 +34,9 @@ public:
 	void SetMaximumDupulicateFrames(int32_t max_dupulicate_frames);
 	bool Push(std::shared_ptr<MediaFrame> media_frame);
 	std::shared_ptr<MediaFrame> Pop();
+
+	double GetOutputFramesPerSecond() const;
+	double GetExpectedOutputFramesPerSecond() const;
 
 	ov::String GetStatsString();
 	ov::String GetInfoString();
@@ -57,13 +61,19 @@ private:
 	// The next PTS to be output
 	int64_t _curr_pts;
 	int64_t _next_pts;
-	
-	int64_t stat_input_frame_count = 0;
-	int64_t stat_output_frame_count = 0;
-	int64_t stat_skip_frame_count = 0;
-	int64_t stat_duplicate_frame_count = 0;
-	int64_t stat_discard_frame_count = 0;
 
-	int64_t _last_input_pts = AV_NOPTS_VALUE;
-	int64_t _last_input_scaled_pts = AV_NOPTS_VALUE;
+	int64_t _last_input_pts					= AV_NOPTS_VALUE;
+	int64_t _last_input_scaled_pts			= AV_NOPTS_VALUE;
+
+	int64_t _stat_input_frame_count			= 0;
+	int64_t _stat_ideal_output_frame_count	= 0;
+	int64_t _stat_actual_output_frame_count = 0;
+	int64_t _stat_skip_frame_count			= 0;
+	int64_t _stat_duplicate_frame_count		= 0;
+	int64_t _stat_discard_frame_count		= 0;
+	int64_t _last_stat_output_frame_count	= 0;
+	double _stat_output_frame_per_second	= 0.0f;
+
+	ov::StopWatch _timer;
+
 };

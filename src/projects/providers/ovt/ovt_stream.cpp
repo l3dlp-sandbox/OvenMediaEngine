@@ -106,6 +106,7 @@ namespace pvd
 		if (!RequestPlay())
 		{
 			SetState(Stream::State::ERROR);
+			Release();
 			return false;
 		}
 		_origin_response_time_msec = stop_watch.Elapsed();

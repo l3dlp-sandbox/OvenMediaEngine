@@ -34,23 +34,23 @@ namespace http
 
 		void HttpConnection::AddUserData(const ov::String &key, std::any user_data)
 		{
-			_user_data_map[key] = user_data;
+			_user_data_map[key] = std::move(user_data);
 		}
 
-		std::any HttpConnection::GetUserData(const ov::String &key) const
+		const std::any *HttpConnection::GetUserData(const ov::String &key) const
 		{
 			auto item = _user_data_map.find(key);
 
 			if (item == _user_data_map.end())
 			{
-				return std::any();
+				return nullptr;
 			}
 
-			return item->second;
+			return &item->second;
 		}
 
 		// Get user datas
-		std::map<ov::String, std::any> HttpConnection::GetUserDataMap() const
+		const std::map<ov::String, std::any>& HttpConnection::GetUserDataMap() const
 		{
 			return _user_data_map;
 		}

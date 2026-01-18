@@ -41,6 +41,17 @@ namespace info
 		info::application_id_t GetApplicationId() const;
 		info::stream_id_t GetStreamId() const;
 
+		struct Path
+        {
+            info::host_id_t _host_id;
+			ov::String _host_name;
+            info::application_id_t _application_id;
+            info::stream_id_t _stream_id;
+            session_id_t _session_id;
+        };
+
+		Path GetSessionPath() const;
+
 	protected:
 		uint64_t _sent_bytes	 = 0;
 		uint64_t _received_bytes = 0;

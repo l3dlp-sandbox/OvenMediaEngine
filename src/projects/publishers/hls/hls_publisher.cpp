@@ -406,12 +406,12 @@ std::shared_ptr<TsHttpInterceptor> HlsPublisher::CreateInterceptor()
 		{
 			session_id_t session_id = connection->GetId();
 
-			try
+			auto session_path_ptr = std::any_cast<info::Session::Path>(connection->GetUserData(stream->GetStreamId()));
+			if (session_path_ptr != nullptr)
 			{
-				// If this connection has been used by another session in the past, it is reused.
-				session = std::any_cast<std::shared_ptr<HlsSession>>(connection->GetUserData(stream->GetStreamId()));
+				session = std::static_pointer_cast<HlsSession>(GetSession(*session_path_ptr));
 			}
-			catch (const std::bad_any_cast &e)
+			else 
 			{
 				session = std::static_pointer_cast<HlsSession>(stream->GetSession(session_id));
 			}
@@ -492,7 +492,7 @@ std::shared_ptr<TsHttpInterceptor> HlsPublisher::CreateInterceptor()
 		}
 
 		// It will be used in CloseHandler
-		connection->AddUserData(stream->GetStreamId(), session);
+		connection->AddUserData(stream->GetStreamId(), std::move(session->GetSessionPath()));
 		session->UpdateLastRequest(connection->GetId());
 
 		stream->SendMessage(session, std::make_any<std::shared_ptr<http::svr::HttpExchange>>(exchange));
@@ -505,16 +505,14 @@ std::shared_ptr<TsHttpInterceptor> HlsPublisher::CreateInterceptor()
 		for (auto &user_data : connection->GetUserDataMap())
 		{
 			std::shared_ptr<HlsSession> session;
-
-			try
-			{
-				session = std::any_cast<std::shared_ptr<HlsSession>>(user_data.second);
-			}
-			catch (const std::bad_any_cast &)
+			
+			auto session_path_ptr = std::any_cast<info::Session::Path>(&user_data.second);
+			if (session_path_ptr == nullptr)
 			{
 				continue;
 			}
 
+			session = std::static_pointer_cast<HlsSession>(GetSession(*session_path_ptr));
 			if (session != nullptr)
 			{
 				session->OnConnectionDisconnected(connection->GetId());

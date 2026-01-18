@@ -88,4 +88,15 @@ namespace info
 		return _stream_id;
 	}
 
+	info::Session::Path Session::GetSessionPath() const
+	{
+		Path path;
+		path._host_id = _host_id;
+		path._host_name = _stream_info->GetApplicationInfo().GetHostInfo().GetName();
+		path._application_id = _application_id;
+		path._stream_id = _stream_id;
+		path._session_id = _id;
+		return path;
+	}
+
 }  // namespace info

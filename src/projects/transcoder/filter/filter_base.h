@@ -161,7 +161,7 @@ protected:
 	std::shared_ptr<MediaTrack> _input_track;
 	std::shared_ptr<MediaTrack> _output_track;
 
-	bool _kill_flag = false;
+	std::atomic<bool> _kill_flag{false};
 	std::thread _thread_work;
 
 	CompleteHandler _complete_handler;

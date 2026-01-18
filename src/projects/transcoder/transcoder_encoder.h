@@ -62,7 +62,7 @@ protected:
 	cmn::BitstreamFormat _bitstream_format = cmn::BitstreamFormat::Unknown;
 	cmn::PacketType _packet_type = cmn::PacketType::Unknown;
 
-	bool _kill_flag = false;
+	std::atomic<bool> _kill_flag{false};
 	std::thread _codec_thread;
 
 	CompleteHandler _complete_handler;

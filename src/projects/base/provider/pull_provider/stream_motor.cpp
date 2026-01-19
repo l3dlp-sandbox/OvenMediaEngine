@@ -139,34 +139,6 @@ namespace pvd
 		return true;
 	}
 
-	bool StreamMotor::UpdateStream(const std::shared_ptr<PullStream> &stream)
-	{
-		std::unique_lock<std::shared_mutex> lock(_streams_map_guard);
-		if(_streams.find(stream->GetId()) == _streams.end())
-		{
-			_streams[stream->GetId()] = stream;
-		}
-		lock.unlock();
-
-		switch (stream->GetProcessMediaEventTriggerMode())
-		{
-			case PullStream::ProcessMediaEventTrigger::TRIGGER_EPOLL:
-				if (!AddStreamToEpoll(stream))
-				{
-					DelStream(stream);
-					return false;
-				}
-				break;
-			case PullStream::ProcessMediaEventTrigger::TRIGGER_INTERVAL:
-			default:
-				break;
-		}
-
-		logti("%s/%s(%u) stream has added to %u StreamMotor", stream->GetApplicationName(), stream->GetName().CStr(), stream->GetId(), GetId());
-
-		return true;
-	}
-
 	bool StreamMotor::DelStream(const std::shared_ptr<PullStream> &stream)
 	{
 		std::unique_lock<std::shared_mutex> lock(_streams_map_guard);
@@ -241,8 +213,7 @@ namespace pvd
 				if (OV_CHECK_FLAG(events, EPOLLHUP) || OV_CHECK_FLAG(events, EPOLLRDHUP))
 				{
 					logti("An error (%u) occurred while epoll_waiting the %s - %s/%s(%u) stream.", events, stream->GetApplicationTypeName(), stream->GetApplicationName(), stream->GetName().CStr(), stream->GetId());
-					DelStreamFromEpoll(stream);
-					stream->Stop();
+					DelStream(stream);
 				}
 				else if(OV_CHECK_FLAG(events, EPOLLIN))
 				{
@@ -257,24 +228,18 @@ namespace pvd
 						}
 						else
 						{
-							// it will be deleted from WhiteElephantCollector
-							DelStreamFromEpoll(stream);
-							stream->Stop();
+							DelStream(stream);
 						}
 					}
 					else
 					{
-						// it will be deleted from WhiteElephantCollector
-						DelStreamFromEpoll(stream);
-						//stream->Stop();
+						DelStream(stream);
 					}
 				}
 				else
 				{
 					logti("An unexpected error (%u) occurred while epoll_waiting the %s - %s/%s(%u) stream.", events, stream->GetApplicationTypeName(), stream->GetApplicationName(), stream->GetName().CStr(), stream->GetId());
-					// it will be deleted from WhiteElephantCollector
-					DelStreamFromEpoll(stream);
-					stream->Stop();
+					DelStream(stream);
 				}
 			}
 

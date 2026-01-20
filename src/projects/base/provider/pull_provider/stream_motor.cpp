@@ -83,7 +83,7 @@ namespace pvd
 		int result = epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, stream_fd, &event);
 		if(result == -1)
 		{
-			logte("%s/%s(%u) Stream could not be added to the epoll (err : %d)", stream->GetApplicationName(), stream->GetName().CStr(), stream->GetId(), result);
+			logte("%s/%s(%u) Stream could not be added to the epoll (err : %d)", stream->GetApplicationName(), stream->GetName().CStr(), stream->GetId(), errno);
 			return false;
 		}
 

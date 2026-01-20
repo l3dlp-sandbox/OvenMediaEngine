@@ -762,16 +762,17 @@ namespace ov
 
 	void SocketPoolWorker::DispatchSocketEventsIfNeeded()
 	{
-		if (_sockets_to_dispatch.empty())
-		{
-			return;
-		}
-
 		// Move _extra_epoll_events to events to avoid blocking
 		decltype(_sockets_to_dispatch) socket_list;
 
 		{
 			std::lock_guard lock_guard(_sockets_to_dispatch_mutex);
+
+			if (_sockets_to_dispatch.empty())
+			{
+				return;
+			}
+
 			std::swap(socket_list, _sockets_to_dispatch);
 		}
 

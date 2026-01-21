@@ -496,7 +496,7 @@ namespace mpegts
 				descriptors_length -= descriptor->GetPacketLength();
 			}
 
-			logtd("ES Stream Type: 0x%02X, PID: 0x%04X", es_info->_stream_type, es_info->_elementary_pid);
+			logtt("ES Stream Type: 0x%02X, PID: 0x%04X", es_info->_stream_type, es_info->_elementary_pid);
 
 			_pmt->_es_info_list.push_back(es_info);
 		}
@@ -548,7 +548,7 @@ namespace mpegts
 		// Descriptor Loop Length : 16 bits
 		uint16_t descriptor_loop_length = parser->ReadBytes<uint16_t>();
 
-		logtd("Splice Info: Protocol Version: %d, Encrypted Packet: %d, Encryption Algorithm: %d, PTS Adjustment: %llu, CW Index: %d, Tier: %d, Splice Command Length: %d, Splice Command Type: %d, Descriptor Loop Length: %d",
+		logtt("Splice Info: Protocol Version: %d, Encrypted Packet: %d, Encryption Algorithm: %d, PTS Adjustment: %llu, CW Index: %d, Tier: %d, Splice Command Length: %d, Splice Command Type: %d, Descriptor Loop Length: %d",
 			  protocol_version, encrypted_packet, encryption_algorithm, pts_adjustment, cw_index, tier, splice_command_length, splice_command_type, descriptor_loop_length);
 
 		if (!splice_command || splice_command->GetLength() == 0)
@@ -581,7 +581,7 @@ namespace mpegts
 		_splice_info->SetTier(tier);
 		_splice_info->SetSpliceCommandType(static_cast<SpliceCommandType>(splice_command_type));
 
-		logtd("Parsed Splice Info\n%s", _splice_info->ToString().CStr());
+		logtt("Parsed Splice Info\n%s", _splice_info->ToString().CStr());
 
 		return true;
 	}

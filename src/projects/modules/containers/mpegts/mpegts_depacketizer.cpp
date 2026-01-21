@@ -56,7 +56,7 @@ namespace mpegts
 		if (packet_type == PacketType::UNSUPPORTED_SECTION || packet_type == PacketType::UNKNOWN)
 		{
 			// FFMPEG ususally sends PID 17 (DVB - SDT), but we don't use this table now
-			logtd("Ignored unsupported or unknown MPEG-TS packets.(PID: %d)", packet->PacketIdentifier());
+			logtt("Ignored unsupported or unknown MPEG-TS packets.(PID: %d)", packet->PacketIdentifier());
 			return false;
 		}
 
@@ -98,7 +98,7 @@ namespace mpegts
 		{
 			if (IsTrackInfoAvailable() == false)
 			{
-				logtd("Parsing section packet (PID: %d)", packet->PacketIdentifier());				
+				logtt("Parsing section packet (PID: %d)", packet->PacketIdentifier());				
 				return ParseSection(packet);
 			}
 		}
@@ -368,7 +368,7 @@ namespace mpegts
 			{
 				// This can be called if the encoder sends faster than the server starts.
 				// These packets can be ignored.
-				logtd("Could not find the pes draft (PID: %d)", packet->PacketIdentifier());
+				logtt("Could not find the pes draft (PID: %d)", packet->PacketIdentifier());
 				return false;
 			}
 
@@ -437,7 +437,7 @@ namespace mpegts
 			// PAT
 			_pat_map.emplace(pat->_program_num, section);
 			// Reserve PMT's PID
-			logtd("Registering PAT. PID: 0x%04X, PacketType::SUPPORTED_SECTION", pat->_program_map_pid);
+			logtt("Registering PAT. PID: 0x%04X, PacketType::SUPPORTED_SECTION", pat->_program_map_pid);
 			_packet_type_table.emplace(pat->_program_map_pid, PacketType::SUPPORTED_SECTION);
 
 			// The last section for PAT
@@ -454,12 +454,12 @@ namespace mpegts
 			{
 				if(es_info->_stream_type == static_cast<uint8_t>(WellKnownStreamTypes::SCTE35))
 				{
-					logtd("Registering PMT. PID: 0x%04X, PacketType::SECTION", es_info->_elementary_pid);
+					logtt("Registering PMT. PID: 0x%04X, PacketType::SECTION", es_info->_elementary_pid);
 					_packet_type_table.emplace(es_info->_elementary_pid, PacketType::SECTION);
 				}
 				else 
 				{
-					logtd("Registering PMT. PID: 0x%04X, PacketType::PES", es_info->_elementary_pid);
+					logtt("Registering PMT. PID: 0x%04X, PacketType::PES", es_info->_elementary_pid);
 					_packet_type_table.emplace(es_info->_elementary_pid, PacketType::PES);
 				}
 			}

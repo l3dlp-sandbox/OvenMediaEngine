@@ -253,7 +253,7 @@ namespace pvd::rtmp
 					auto value = property_pair->property.GetString();
 					OV_IF_RETURN(value == "stereo", cmn::AudioChannel::Layout::LayoutStereo);
 					OV_IF_RETURN(value == "mono", cmn::AudioChannel::Layout::LayoutMono);
-					logtd("Unknown audiochannels value: %s", value.CStr());
+					logtt("Unknown audiochannels value: %s", value.CStr());
 				}
 
 				default:
@@ -621,7 +621,7 @@ namespace pvd::rtmp
 	{
 		double object_encoding = 0.0;
 
-		logtd("Received RTMP document\n%s", document.ToString().CStr());
+		logtt("Received RTMP document\n%s", document.ToString().CStr());
 
 		auto meta_property = document.GetObject(2);
 		if (meta_property == nullptr)
@@ -696,7 +696,7 @@ namespace pvd::rtmp
 
 	bool RtmpChunkHandler::OnAmfDeleteStream(const std::shared_ptr<const modules::rtmp::ChunkHeader> &header, modules::rtmp::AmfDocument &document, double transaction_id)
 	{
-		logad("OnAmfDeleteStream - Delete Stream");
+		logat("OnAmfDeleteStream - Delete Stream");
 
 		_meta_data_context.ignore_packets = true;
 
@@ -956,7 +956,7 @@ namespace pvd::rtmp
 
 	void RtmpChunkHandler::GenerateEvent(const cfg::vhost::app::pvd::Event &event, const ov::String &value)
 	{
-		logad("Event generated: %s / %s", event.GetTrigger().CStr(), value.CStr());
+		logat("Event generated: %s / %s", event.GetTrigger().CStr(), value.CStr());
 
 		bool id3_enabled = false;
 		auto id3v2_event = event.GetHLSID3v2(&id3_enabled);
@@ -1056,7 +1056,7 @@ namespace pvd::rtmp
 			// AMFDataMessage.[<Property>.<Property>...<Property>.]<Object Name>.<Key Name>
 			if (trigger_list.size() < 3)
 			{
-				logad("Invalid trigger: %s", trigger.CStr());
+				logat("Invalid trigger: %s", trigger.CStr());
 				continue;
 			}
 
@@ -1072,7 +1072,7 @@ namespace pvd::rtmp
 
 					if (property == nullptr)
 					{
-						logad("Document has no property at %zu: %s", size - 1, trigger.CStr());
+						logat("Document has no property at %zu: %s", size - 1, trigger.CStr());
 						break;
 					}
 
@@ -1091,7 +1091,7 @@ namespace pvd::rtmp
 
 							if (object_array == nullptr)
 							{
-								logad("Property is not an object: %s", property->GetString().CStr());
+								logat("Property is not an object: %s", property->GetString().CStr());
 								break;
 							}
 
@@ -1111,7 +1111,7 @@ namespace pvd::rtmp
 						}
 						else
 						{
-							logad("Document property type mismatch at %d: %s", size - 1, property->GetString().CStr());
+							logat("Document property type mismatch at %d: %s", size - 1, property->GetString().CStr());
 							break;
 						}
 					}
@@ -1119,7 +1119,7 @@ namespace pvd::rtmp
 					{
 						if (trigger_list.at(size) != property->GetString())
 						{
-							logad("Document property mismatch at %d: %s != %s", size - 1, trigger_list.at(size).CStr(), property->GetString().CStr());
+							logat("Document property mismatch at %d: %s != %s", size - 1, trigger_list.at(size).CStr(), property->GetString().CStr());
 							break;
 						}
 					}
@@ -1314,7 +1314,7 @@ namespace pvd::rtmp
 			return true;
 		}
 
-		logad("Received RTMP metadata\n%s", document.ToString().CStr());
+		logat("Received RTMP metadata\n%s", document.ToString().CStr());
 
 		// Obtain the message name
 		ov::String message_name;
@@ -1375,7 +1375,7 @@ namespace pvd::rtmp
 		// Find it in Events
 		if (CheckEvent(message->header, document) == false)
 		{
-			logad("There were no triggered events - Message(%s / %s)", message_name.CStr(), data_name.CStr());
+			logat("There were no triggered events - Message(%s / %s)", message_name.CStr(), data_name.CStr());
 		}
 
 		return true;
@@ -1606,7 +1606,7 @@ namespace pvd::rtmp
 #if DEBUG
 			if (parsed_data->video_metadata.has_value())
 			{
-				logtd("Metadata: \n%s", parsed_data->video_metadata.value().ToString().CStr());
+				logtt("Metadata: \n%s", parsed_data->video_metadata.value().ToString().CStr());
 			}
 #endif	// DEBUG
 
@@ -1852,8 +1852,8 @@ namespace pvd::rtmp
 				case modules::rtmp::ChunkParser::ParseResult::Parsed:
 					if (HandleChunkMessage() == false)
 					{
-						logad("HandleChunkMessage Fail");
-						logat("Failed to import packet\n%s", current_data->Dump(current_data->GetLength()).CStr());
+						logat("HandleChunkMessage Fail");
+						logap("Failed to import packet\n%s", current_data->Dump(current_data->GetLength()).CStr());
 
 						return -1LL;
 					}

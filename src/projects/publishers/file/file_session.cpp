@@ -39,7 +39,7 @@ namespace pub
 
 	FileSession::~FileSession()
 	{
-		logtd("FileSession(%d) has been terminated finally", GetId());
+		logtt("FileSession(%d) has been terminated finally", GetId());
 		MonitorInstance->OnSessionDisconnected(*GetStream(), PublisherType::File);
 	}
 
@@ -54,7 +54,7 @@ namespace pub
 			return false;
 		}
 
-		logtd("FileSession(%d) has started.", GetId());
+		logtt("FileSession(%d) has started.", GetId());
 
 		return Session::Start();
 	}
@@ -68,7 +68,7 @@ namespace pub
 			return false;
 		}
 
-		logtd("FileSession(%d) has stoped", GetId());
+		logtt("FileSession(%d) has stoped", GetId());
 
 		return Session::Stop();
 	}
@@ -160,7 +160,7 @@ namespace pub
 
 			if (ffmpeg::compat::IsSupportCodec(output_format, track->GetCodecId()) == false)
 			{
-				logtd("%s format does not support the codec(%s)", output_format.CStr(), cmn::GetCodecIdString(track->GetCodecId()));
+				logtt("%s format does not support the codec(%s)", output_format.CStr(), cmn::GetCodecIdString(track->GetCodecId()));
 				continue;
 			}
 
@@ -174,7 +174,7 @@ namespace pub
 			}
 		}
 
-		logtd("Create temporary file(%s) and default track id(%d)", writer->GetUrl().CStr(), _default_track);
+		logtt("Create temporary file(%s) and default track id(%d)", writer->GetUrl().CStr(), _default_track);
 
 		if (writer->Start() == false)
 		{
@@ -184,7 +184,7 @@ namespace pub
 			return false;
 		}
 
-		logtd("Recording Started. %s", record->GetInfoString().CStr());
+		logtt("Recording Started. %s", record->GetInfoString().CStr());
 
 		return true;
 	}
@@ -293,7 +293,7 @@ namespace pub
 					return false;
 				}
 
-				logtd("Replace the temporary file name with the target file name. from: %s, to: %s", tmp_output_path.CStr(), output_path.CStr());
+				logtt("Replace the temporary file name with the target file name. from: %s, to: %s", tmp_output_path.CStr(), output_path.CStr());
 
 				// Append recorded information to the information file
 				if (FileExport::GetInstance()->ExportRecordToXml(info_path, record) == false)
@@ -301,11 +301,11 @@ namespace pub
 					logte("Failed to export xml file. path: %s", info_path.CStr());
 				}
 
-				logtd("Appends the recording result to the information file. path: %s", info_path.CStr());
+				logtt("Appends the recording result to the information file. path: %s", info_path.CStr());
 
 				record->SetState(info::Record::RecordState::Stopped);
 				
-				logtd("Recording Completed. %s", record->GetInfoString().CStr());
+				logtt("Recording Completed. %s", record->GetInfoString().CStr());
 								
 				record->IncreaseSequence();
 			}
@@ -335,7 +335,7 @@ namespace pub
 		}
 		catch (const std::bad_any_cast &e)
 		{
-			logtd("An incorrect type of packet was input from the stream. (%s)", e.what());
+			logtt("An incorrect type of packet was input from the stream. (%s)", e.what());
 
 			return;
 		}

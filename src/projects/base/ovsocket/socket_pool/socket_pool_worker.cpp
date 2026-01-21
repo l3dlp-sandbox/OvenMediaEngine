@@ -14,8 +14,8 @@
 #undef OV_LOG_TAG
 #define OV_LOG_TAG "Socket.Pool.Worker"
 
+#define logap(format, ...) logtp("[#%d] [%p] " format, (GetNativeHandle() == InvalidSocket) ? 0 : GetNativeHandle(), this, ##__VA_ARGS__)
 #define logat(format, ...) logtt("[#%d] [%p] " format, (GetNativeHandle() == InvalidSocket) ? 0 : GetNativeHandle(), this, ##__VA_ARGS__)
-#define logad(format, ...) logtd("[#%d] [%p] " format, (GetNativeHandle() == InvalidSocket) ? 0 : GetNativeHandle(), this, ##__VA_ARGS__)
 #define logai(format, ...) logti("[#%d] [%p] " format, (GetNativeHandle() == InvalidSocket) ? 0 : GetNativeHandle(), this, ##__VA_ARGS__)
 #define logaw(format, ...) logtw("[#%d] [%p] " format, (GetNativeHandle() == InvalidSocket) ? 0 : GetNativeHandle(), this, ##__VA_ARGS__)
 #define logae(format, ...) logte("[#%d] [%p] " format, (GetNativeHandle() == InvalidSocket) ? 0 : GetNativeHandle(), this, ##__VA_ARGS__)
@@ -118,7 +118,7 @@ namespace ov
 
 	bool SocketPoolWorker::PrepareEpoll()
 	{
-		logad("Creating epoll for %s...", StringFromSocketType(GetType()));
+		logat("Creating epoll for %s...", StringFromSocketType(GetType()));
 
 		std::shared_ptr<Error> error;
 
@@ -168,7 +168,7 @@ namespace ov
 		}
 		else
 		{
-			logad("Epoll is created for %s",
+			logat("Epoll is created for %s",
 				  StringFromSocketType(GetType()));
 		}
 
@@ -220,7 +220,7 @@ namespace ov
 			else if (socket->HasCommand() == false)
 			{
 				// There have been unprocessed commands in the past, but now all of them have been processed
-				logad("All commands of socket are processed (%s)", socket->ToString().CStr());
+				logat("All commands of socket are processed (%s)", socket->ToString().CStr());
 				candidate = _gc_candidates.erase(candidate);
 			}
 			else
@@ -302,7 +302,7 @@ namespace ov
 					OV_ASSERT2(socket != nullptr);
 					OV_ASSERT2(event_callback != nullptr);
 
-					logat("Epoll event #%d (total: %d): %s, events: %s (%d, 0x%x), %s",
+					logap("Epoll event #%d (total: %d): %s, events: %s (%d, 0x%x), %s",
 						  index, count,
 						  socket->ToString().CStr(),
 						  StringFromEpollEvent(event).CStr(), events, events,
@@ -312,7 +312,7 @@ namespace ov
 					{
 						// The socket was closed or an error occurred just before this epoll events occurred.
 						// So the socket can't receive the epoll events.
-						logad("Epoll events are ignored - this event might occurs immediately after close/error");
+						logat("Epoll events are ignored - this event might occurs immediately after close/error");
 						continue;
 					}
 
@@ -325,7 +325,7 @@ namespace ov
 							socket->SetFirstEpollEventReceived();
 
 							// EPOLLOUT events might occur immediately after added to epoll
-							logad("EPOLLOUT is ignored for #%d - this event might occurs immediately after added to epoll", socket->GetNativeHandle());
+							logat("EPOLLOUT is ignored for #%d - this event might occurs immediately after added to epoll", socket->GetNativeHandle());
 
 							continue;
 						}
@@ -396,7 +396,7 @@ namespace ov
 										break;
 
 									case PostProcessMethod::GarbageCollection:
-										logad("Need to do garbage collection for %s", socket->ToString().CStr());
+										logat("Need to do garbage collection for %s", socket->ToString().CStr());
 										_gc_candidates[socket->GetNativeHandle()] = socket;
 										break;
 
@@ -409,7 +409,7 @@ namespace ov
 							else
 							{
 								// EPOLLOUT can be ignored because it is not disconnected
-								logtd("EPOLLOUT is received, but ignored by EPOLLHUP event");
+								logtt("EPOLLOUT is received, but ignored by EPOLLHUP event");
 							}
 						}
 
@@ -431,16 +431,16 @@ namespace ov
 								{
 									if (socket->GetSockOpt(SO_ERROR, &socket_error))
 									{
-										logad("EPOLLERR detected: %s\n", ::strerror(socket_error));
+										logat("EPOLLERR detected: %s\n", ::strerror(socket_error));
 									}
 									else
 									{
-										logad("EPOLLERR detected, errno: %s\n", Error::CreateErrorFromErrno()->What());
+										logat("EPOLLERR detected, errno: %s\n", Error::CreateErrorFromErrno()->What());
 									}
 								}
 								else
 								{
-									logad("EPOLLERR detected, errno: %s\n", SrtError::CreateErrorFromSrt()->What());
+									logat("EPOLLERR detected, errno: %s\n", SrtError::CreateErrorFromSrt()->What());
 								}
 							}
 #endif	// DEBUG
@@ -473,7 +473,7 @@ namespace ov
 					{
 						_gc_candidates.erase(socket->GetNativeHandle());
 
-						logad("CloseImmediatelyWithState(%s) for %s", StringFromSocketState(new_state), socket->ToString().CStr());
+						logat("CloseImmediatelyWithState(%s) for %s", StringFromSocketState(new_state), socket->ToString().CStr());
 						socket->CloseImmediatelyWithState(new_state);
 					}
 				}
@@ -531,7 +531,7 @@ namespace ov
 				event.events   = EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLRDHUP | EPOLLET;
 				event.data.ptr = socket.get();
 
-				logad("Trying to add socket #%d to epoll...", native_handle);
+				logat("Trying to add socket #%d to epoll...", native_handle);
 
 				if (::epoll_ctl(_epoll, EPOLL_CTL_ADD, native_handle, &event) == -1)
 				{
@@ -710,7 +710,7 @@ namespace ov
 				break;
 
 			default:
-				logad("Not handled SRT status %d for socket #%d", status, srt_socket);
+				logat("Not handled SRT status %d for socket #%d", status, srt_socket);
 				break;
 		}
 	}
@@ -788,7 +788,7 @@ namespace ov
 				case Socket::DispatchResult::PartialDispatched:
 					if (socket->IsClosable())
 					{
-						logad("Need to do garbage collection for %s (dispatch_later)", socket->ToString().CStr());
+						logat("Need to do garbage collection for %s (dispatch_later)", socket->ToString().CStr());
 						_gc_candidates[socket->GetNativeHandle()] = socket;
 					}
 					else
@@ -800,7 +800,7 @@ namespace ov
 				case Socket::DispatchResult::Error:
 					if (socket->IsClosable())
 					{
-						logad("Socket %s will be closed by dispatcher", socket->ToString().CStr());
+						logat("Socket %s will be closed by dispatcher", socket->ToString().CStr());
 						socket->CloseImmediatelyWithState(SocketState::Error);
 					}
 					else
@@ -845,7 +845,7 @@ namespace ov
 		std::shared_ptr<Error> error;
 		auto native_handle = socket->GetNativeHandle();
 
-		logad("Trying to unregister a socket #%d from epoll...", native_handle);
+		logat("Trying to unregister a socket #%d from epoll...", native_handle);
 
 		switch (GetType())
 		{
@@ -875,7 +875,7 @@ namespace ov
 
 		if (error == nullptr)
 		{
-			logad("Socket #%d is unregistered", native_handle);
+			logat("Socket #%d is unregistered", native_handle);
 		}
 		else
 		{

@@ -24,12 +24,12 @@ std::shared_ptr<LLHlsPublisher> LLHlsPublisher::Create(const cfg::Server &server
 LLHlsPublisher::LLHlsPublisher(const cfg::Server &server_config, const std::shared_ptr<MediaRouterInterface> &router)
 	: Publisher(server_config, router)
 {
-	logtd("LLHlsPublisher has been create");
+	logtt("LLHlsPublisher has been create");
 }
 
 LLHlsPublisher::~LLHlsPublisher()
 {
-	logtd("LLHlsPublisher has been terminated finally");
+	logtt("LLHlsPublisher has been terminated finally");
 }
 
 bool LLHlsPublisher::PrepareHttpServers(
@@ -270,7 +270,7 @@ std::shared_ptr<LLHlsHttpInterceptor> LLHlsPublisher::CreateInterceptor()
 		}
 		auto requested_url = final_url;
 
-		logtd("LLHLS requested(connection : %u): %s", connection->GetId(), request->GetUri().CStr());
+		logtt("LLHLS requested(connection : %u): %s", connection->GetId(), request->GetUri().CStr());
 
 		auto vhost_app_name = ocst::Orchestrator::GetInstance()->ResolveApplicationNameFromDomain(final_url->Host(), final_url->App());
 
@@ -513,7 +513,7 @@ std::shared_ptr<LLHlsHttpInterceptor> LLHlsPublisher::CreateInterceptor()
 				session->OnConnectionDisconnected(connection->GetId());
 				if (session->IsNoConnection())
 				{
-					logtd("llhls session is closed : %u", session->GetId());
+					logtt("llhls session is closed : %u", session->GetId());
 					// Remove session from stream
 					auto stream = session->GetStream();
 					if (stream != nullptr)

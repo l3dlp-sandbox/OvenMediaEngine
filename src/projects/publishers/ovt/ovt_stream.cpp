@@ -23,12 +23,12 @@ OvtStream::OvtStream(const std::shared_ptr<pub::Application> application,
 		: Stream(application, info),
 		_worker_count(worker_count)
 {
-	logtd("OvtStream(%s/%s) has been started", GetApplicationName() , GetName().CStr());
+	logtt("OvtStream(%s/%s) has been started", GetApplicationName() , GetName().CStr());
 }
 
 OvtStream::~OvtStream()
 {
-	logtd("OvtStream(%s/%s) has been terminated finally", GetApplicationName() , GetName().CStr());
+	logtt("OvtStream(%s/%s) has been terminated finally", GetApplicationName() , GetName().CStr());
 }
 
 bool OvtStream::Start()
@@ -53,7 +53,7 @@ bool OvtStream::Start()
 		return false;
 	}
 
-	logtd("OvtStream(%d) has been started", GetId());
+	logtt("OvtStream(%d) has been started", GetId());
 	_packetizer = std::make_shared<OvtPacketizer>(OvtPacketizerInterface::GetSharedPtr());
 
 	return Stream::Start();
@@ -66,7 +66,7 @@ bool OvtStream::Stop()
 		return false;
 	}
 
-	logtd("OvtStream(%u) has been stopped", GetId());
+	logtt("OvtStream(%u) has been stopped", GetId());
 
 	if (GetLinkedInputStream() != nullptr && GetLinkedInputStream()->IsFromOriginMapStore() == false)
 	{
@@ -255,12 +255,12 @@ bool OvtStream::RemoveSessionByConnectorId(int connector_id)
 {
 	auto sessions = GetAllSessions();
 
-	logtd("RemoveSessionByConnectorId : all(%d) connector(%d)", sessions.size(), connector_id);
+	logtt("RemoveSessionByConnectorId : all(%d) connector(%d)", sessions.size(), connector_id);
 
 	for(const auto &item : sessions)
 	{
 		auto session = std::static_pointer_cast<OvtSession>(item.second);
-		logtd("session : %d %d", session->GetId(), session->GetConnector()->GetNativeHandle());
+		logtt("session : %d %d", session->GetId(), session->GetConnector()->GetNativeHandle());
 
 		if(session->GetConnector()->GetNativeHandle() == connector_id)
 		{

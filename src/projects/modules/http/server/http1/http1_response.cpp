@@ -94,7 +94,7 @@ namespace http
 
 				if (Send(response))
 				{
-					logtd("Header is sent:\n%s", response->Dump(response->GetLength()).CStr());
+					logtt("Header is sent:\n%s", response->Dump(response->GetLength()).CStr());
 					return response->GetLength();
 				}
 
@@ -106,7 +106,7 @@ namespace http
 			{
 				bool sent = true;
 
-				logtd("Trying to send datas...");
+				logtt("Trying to send datas...");
 
 				uint32_t sent_bytes = 0;
 				for (const auto &data : GetResponseDataList())
@@ -141,7 +141,7 @@ namespace http
 
 				ResetResponseData();
 
-				logtd("All datas are sent...");
+				logtt("All datas are sent...");
 
 				return sent_bytes;
 			}

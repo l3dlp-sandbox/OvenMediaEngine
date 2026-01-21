@@ -214,7 +214,7 @@ void DecoderAVC::CodecThread()
 			}
 			else if (ret == AVERROR_INVALIDDATA) 
 			{
-				logtd("[%s] Invalid data encountered while receiving a packet for decoding.", _stream_info.GetUri().CStr());
+				logtt("[%s] Invalid data encountered while receiving a packet for decoding.", _stream_info.GetUri().CStr());
 
 				Complete(TranscodeResult::NoData, nullptr);
 

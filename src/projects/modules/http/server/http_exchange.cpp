@@ -46,7 +46,7 @@ namespace http
 			}
 			else
 			{
-				logtd("\n%s", GetDebugInfo().CStr());
+				logtt("\n%s", GetDebugInfo().CStr());
 			}
 
 			_status = Status::Completed;
@@ -157,7 +157,7 @@ namespace http
 					//      cookies or request authentication to a server.  Unknown header
 					//      fields are ignored, as per [RFC2616].
 
-					logtd("%s is websocket request", GetRequest()->ToString().CStr());
+					logtt("%s is websocket request", GetRequest()->ToString().CStr());
 
 					return true;
 				}

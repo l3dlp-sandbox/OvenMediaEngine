@@ -145,7 +145,7 @@ namespace pvd
 				return false;
 			}
 
-			logtd("SendDataFrame - %s/%s(%u) - last_media_timestamp_ms: %lld, elapsed_from_last_media_timestamp: %lld, timestamp: %lld ms",
+			logtt("SendDataFrame - %s/%s(%u) - last_media_timestamp_ms: %lld, elapsed_from_last_media_timestamp: %lld, timestamp: %lld ms",
 				  GetApplicationName(), GetName().CStr(), GetId(),
 				  _last_media_timestamp_ms, _elapsed_from_last_media_timestamp.Elapsed(), timestamp_in_ms);
 		}
@@ -280,7 +280,7 @@ namespace pvd
 					{
 						auto old_language = track->GetLanguage();
 						track->SetLanguage(command->GetLanguage());
-						logtd("[%s/%s(%u)] Subtitle track language has been updated %s -> %s", GetApplicationName(), GetName().CStr(), GetId(), old_language.CStr(), track->GetLanguage().CStr());
+						logtt("[%s/%s(%u)] Subtitle track language has been updated %s -> %s", GetApplicationName(), GetName().CStr(), GetId(), old_language.CStr(), track->GetLanguage().CStr());
 					}
 				}
 
@@ -511,7 +511,7 @@ namespace pvd
 			_start_timestamp_us = Rescale(dts, us_scale, track_scale);
 
 			// for debugging
-			logtd("[%s/%s(%d)] Get start timestamp of stream. track:%u, ts:%lld (%lld/%lld) (%lld us)",
+			logtt("[%s/%s(%d)] Get start timestamp of stream. track:%u, ts:%lld (%lld/%lld) (%lld us)",
 				  _application->GetVHostAppName().CStr(), GetName().CStr(), GetId(),
 				  track_id,
 				  dts, num_tb, den_tb,
@@ -668,7 +668,7 @@ namespace pvd
 		// First timestamp
 		if (_source_timestamp_map.find(track_id) == _source_timestamp_map.end())
 		{
-			logtd("New track timestamp(%u) : curr(%lld)", track_id, timestamp);
+			logtt("New track timestamp(%u) : curr(%lld)", track_id, timestamp);
 			_source_timestamp_map[track_id] = timestamp;
 
 			// Start with zero
@@ -683,13 +683,13 @@ namespace pvd
 			// If the last timestamp exceeds 99.99%, it is judged to be wrapped around.
 			if (_source_timestamp_map[track_id] > ((double)max_timestamp * 99.99) / 100)
 			{
-				logtd("Wrapped around(%u) : last(%lld) curr(%lld)", track_id, _source_timestamp_map[track_id], timestamp);
+				logtt("Wrapped around(%u) : last(%lld) curr(%lld)", track_id, _source_timestamp_map[track_id], timestamp);
 				delta = (max_timestamp - _source_timestamp_map[track_id]) + timestamp;
 			}
 			// Otherwise, the source might be changed. (restarted)
 			else
 			{
-				logtd("Source changed(%u) : last(%lld) curr(%lld)", track_id, _source_timestamp_map[track_id], timestamp);
+				logtt("Source changed(%u) : last(%lld) curr(%lld)", track_id, _source_timestamp_map[track_id], timestamp);
 				delta = 0;
 			}
 		}

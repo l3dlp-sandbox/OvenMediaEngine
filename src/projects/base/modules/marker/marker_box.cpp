@@ -641,7 +641,7 @@ int64_t MarkerBox::GetEstimatedSequenceNumber(int64_t timestamp_ms) const
 	auto prev_markers = GetMarkerCount();
 	estimated_sequence_number += prev_markers;
 
-	logtd("actual_segment_duration_ms: %f, last_sample_end_timestamp_ms: %f, time_until_marker_ms: %f, remaining_time_in_current_segment_ms: %f, estimated_sequence_number: %lld last_segment_number: %lld  last_segment_duration: %f is_last_segment_completed: %d",
+	logtt("actual_segment_duration_ms: %f, last_sample_end_timestamp_ms: %f, time_until_marker_ms: %f, remaining_time_in_current_segment_ms: %f, estimated_sequence_number: %lld last_segment_number: %lld  last_segment_duration: %f is_last_segment_completed: %d",
 		  actual_segment_duration_ms, last_sample_end_timestamp_ms, time_until_marker_ms, remaining_time_in_current_segment_ms, estimated_sequence_number, segment_info->last_segment_number, segment_info->last_segement_duration_ms, segment_info->is_last_segment_completed);
 
 	return estimated_sequence_number;

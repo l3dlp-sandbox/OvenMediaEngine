@@ -64,7 +64,7 @@ namespace pvd
 	RtmpProvider::RtmpProvider(const cfg::Server &server_config, const std::shared_ptr<MediaRouterInterface> &router)
 		: PushProvider(server_config, router)
 	{
-		logtd("Created Rtmp Provider module.");
+		logtt("Created Rtmp Provider module.");
 	}
 
 	RtmpProvider::~RtmpProvider()

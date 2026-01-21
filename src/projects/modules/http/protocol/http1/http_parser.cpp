@@ -126,10 +126,10 @@ namespace http
 					}
 				}
 
-				logtd("Headers: %ld:", _headers.size());
+				logtt("Headers: %ld:", _headers.size());
 
 				std::for_each(_headers.begin(), _headers.end(), [](const auto &pair) -> void {
-					logtd("\t>> %s: %s", pair.first.CStr(), pair.second.CStr());
+					logtt("\t>> %s: %s", pair.first.CStr(), pair.second.CStr());
 				});
 
 				_has_content_length = IsHeaderExists("CONTENT-LENGTH");

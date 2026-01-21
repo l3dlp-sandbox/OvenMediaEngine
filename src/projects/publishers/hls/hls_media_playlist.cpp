@@ -45,7 +45,7 @@ bool HlsMediaPlaylist::OnSegmentCreated(const std::shared_ptr<mpegts::Segment> &
 
 	std::lock_guard<std::shared_mutex> lock(_segments_mutex);
 
-	logtd("HlsMediaPlaylist::OnSegmentCreated - number(%d) url(%s) duration_us(%.3f)\n", segment->GetNumber(), segment->GetUrl().CStr(), segment->GetDurationMs());
+	logtt("HlsMediaPlaylist::OnSegmentCreated - number(%d) url(%s) duration_us(%.3f)\n", segment->GetNumber(), segment->GetUrl().CStr(), segment->GetDurationMs());
 
 	if (segment->HasMarker() == true)
 	{
@@ -61,7 +61,7 @@ bool HlsMediaPlaylist::OnSegmentDeleted(const std::shared_ptr<mpegts::Segment> &
 {
 	std::lock_guard<std::shared_mutex> lock(_segments_mutex);
 
-	logtd("HlsMediaPlaylist::OnSegmentDeleted - number(%d) url(%s) duration_ms(%.3fu)\n", segment->GetNumber(), segment->GetUrl().CStr(), segment->GetDurationMs());
+	logtt("HlsMediaPlaylist::OnSegmentDeleted - number(%d) url(%s) duration_ms(%.3fu)\n", segment->GetNumber(), segment->GetUrl().CStr(), segment->GetDurationMs());
 
 	auto it = _segments.find(segment->GetNumber());
 	if (it == _segments.end())

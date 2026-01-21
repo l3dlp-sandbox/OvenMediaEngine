@@ -205,7 +205,7 @@ std::shared_ptr<MediaTrack> TranscoderStreamInternal::CreateOutputTrack(
 			// Round adjusted_frame_rate to 2 decimal places
 			auto adjusted_frame_rate = ::round(input_track->GetFrameRate() / (skip_frames + 1) * 100.0) / 100.0;
 
-			logtd("Adjust the output framerate %.02f -> %.02f according to the skip frames %d",
+			logtt("Adjust the output framerate %.02f -> %.02f according to the skip frames %d",
 				  input_track->GetFrameRate(),
 				  adjusted_frame_rate,
 				  skip_frames);
@@ -217,7 +217,7 @@ std::shared_ptr<MediaTrack> TranscoderStreamInternal::CreateOutputTrack(
 			if (output_track->GetKeyFrameIntervalByConfig() > 0)
 			{
 				auto adjusted_key_frame_interval = ::round(output_track->GetKeyFrameIntervalByConfig() / (skip_frames + 1));
-				logtd("Adjust the output key_frame_interval %.02f -> %.02f according to the skip frames %d",
+				logtt("Adjust the output key_frame_interval %.02f -> %.02f according to the skip frames %d",
 					  output_track->GetKeyFrameIntervalByConfig(),
 					  adjusted_key_frame_interval,
 					  skip_frames);
@@ -445,7 +445,7 @@ std::shared_ptr<MediaTrack> TranscoderStreamInternal::CreateOutputTrack(const st
 			// Round adjusted_frame_rate to 2 decimal places
 			auto adjusted_frame_rate = ::round(input_track->GetFrameRate() / (skip_frames + 1) * 100.0) / 100.0;
 
-			logtd("Adjust the output framerate %.02f -> %.02f according to the skip frames %d",
+			logtt("Adjust the output framerate %.02f -> %.02f according to the skip frames %d",
 				  input_track->GetFrameRate(),
 				  adjusted_frame_rate,
 				  skip_frames);
@@ -457,7 +457,7 @@ std::shared_ptr<MediaTrack> TranscoderStreamInternal::CreateOutputTrack(const st
 			if (output_track->GetKeyFrameIntervalByConfig() > 0)
 			{
 				auto adjusted_key_frame_interval = ::round(output_track->GetKeyFrameIntervalByConfig() / (skip_frames + 1));
-				logtd("Adjust the output key_frame_interval %.02f -> %.02f according to the skip frames %d",
+				logtt("Adjust the output key_frame_interval %.02f -> %.02f according to the skip frames %d",
 					  output_track->GetKeyFrameIntervalByConfig(),
 					  adjusted_key_frame_interval,
 					  skip_frames);
@@ -844,7 +844,7 @@ void TranscoderStreamInternal::UpdateOutputTrackTranscode(const std::shared_ptr<
 		{
 			int32_t new_width = (output_track->GetWidth() / 4 + 1) * 4;
 
-			logtd("The width of the output track is not a multiple of 4. change the width to %d -> %d", output_track->GetWidth(), new_width);
+			logtt("The width of the output track is not a multiple of 4. change the width to %d -> %d", output_track->GetWidth(), new_width);
 
 			output_track->SetWidth(new_width);
 		}
@@ -853,7 +853,7 @@ void TranscoderStreamInternal::UpdateOutputTrackTranscode(const std::shared_ptr<
 		{
 			int32_t new_height = (output_track->GetHeight() / 4 + 1) * 4;
 
-			logtd("The height of the output track is not a multiple of 4. change the height to %d -> %d", output_track->GetHeight(), new_height);
+			logtt("The height of the output track is not a multiple of 4. change the height to %d -> %d", output_track->GetHeight(), new_height);
 
 			output_track->SetHeight(new_height);
 		}
@@ -922,7 +922,7 @@ bool TranscoderStreamInternal::IsKeyframeOnlyDecodable(const std::map<ov::String
 
 	GetCountByEncodingType(streams, video, video_bypass, audio, audio_bypass, image, data);
 
-	// logtd("Video:%u, Video(Bypass):%u, Audio:%u, Audio(Bypass):%u, Image:%u, Data:%u",
+	// logtt("Video:%u, Video(Bypass):%u, Audio:%u, Audio(Bypass):%u, Image:%u, Data:%u",
 	// 	  video, video_bypass, audio, audio_bypass, image, data);
 
 	if (video == 0 && image > 0)

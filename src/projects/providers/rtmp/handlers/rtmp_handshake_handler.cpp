@@ -190,7 +190,7 @@ namespace pvd::rtmp
 				return 0LL;
 			}
 
-			logtd("Trying to check RTMP version (%d)...", modules::rtmp::HANDSHAKE_VERSION);
+			logtt("Trying to check RTMP version (%d)...", modules::rtmp::HANDSHAKE_VERSION);
 
 			auto version = data->At(0);
 
@@ -245,7 +245,7 @@ namespace pvd::rtmp
 			_handshake_state = modules::rtmp::HandshakeState::Completed;
 			_is_handshake_completed = true;
 
-			logtd("Handshake is completed");
+			logtt("Handshake is completed");
 			return modules::rtmp::HANDSHAKE_PACKET_LENGTH;
 		}
 

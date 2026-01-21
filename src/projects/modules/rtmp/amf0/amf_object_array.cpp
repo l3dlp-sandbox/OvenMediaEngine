@@ -56,7 +56,7 @@ bool AmfObjectArray::Append(const char *name, const AmfProperty &property)
 {
 	if (name == nullptr)
 	{
-		logtd("Could not append the property - name is null");
+		logtt("Could not append the property - name is null");
 		return false;
 	}
 
@@ -68,7 +68,7 @@ bool AmfObjectArray::Encode(ov::ByteStream &byte_stream, bool encode_marker) con
 {
 	if (encode_marker && (EncodeMarker(byte_stream) == false))
 	{
-		logtd("Failed to encode marker");
+		logtt("Failed to encode marker");
 		return false;
 	}
 
@@ -112,7 +112,7 @@ bool AmfObjectArray::Decode(ov::ByteStream &byte_stream, bool decode_marker)
 		AmfTypeMarker type;
 		if (DecodeMarker(byte_stream, false, &type) == false)
 		{
-			logtd("Failed to decode marker");
+			logtt("Failed to decode marker");
 			return false;
 		}
 
@@ -128,7 +128,7 @@ bool AmfObjectArray::Decode(ov::ByteStream &byte_stream, bool decode_marker)
 	{
 		if (byte_stream.IsRemained(4) == false)
 		{
-			logtd("Failed to read the count of items");
+			logtt("Failed to read the count of items");
 			return false;
 		}
 
@@ -159,7 +159,7 @@ bool AmfObjectArray::Decode(ov::ByteStream &byte_stream, bool decode_marker)
 
 		if (byte_stream.IsRemained(name_length) == false)
 		{
-			logtd("Failed to read the name");
+			logtt("Failed to read the name");
 			return false;
 		}
 
@@ -173,7 +173,7 @@ bool AmfObjectArray::Decode(ov::ByteStream &byte_stream, bool decode_marker)
 		if (property.Decode(byte_stream, true) == false)
 		{
 			// Could not decode the data
-			logtd("Failed to decode the value");
+			logtt("Failed to decode the value");
 			return false;
 		}
 

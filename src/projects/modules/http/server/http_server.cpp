@@ -190,7 +190,7 @@ namespace http
 
 		void HttpServer::OnDisconnected(const std::shared_ptr<ov::Socket> &remote, PhysicalPortDisconnectReason reason, const std::shared_ptr<const ov::Error> &error)
 		{
-			logtd("HttpServer::OnDisconnected : %d", remote->GetNativeHandle());
+			logtt("HttpServer::OnDisconnected : %d", remote->GetNativeHandle());
 
 			std::shared_ptr<HttpConnection> connection;
 

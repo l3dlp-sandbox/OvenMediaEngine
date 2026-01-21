@@ -40,14 +40,14 @@ namespace pvd
 	{
 		_last_request_id = 0;
 		SetState(State::IDLE);
-		logtd("OvtStream Created : %d", GetId());
+		logtt("OvtStream Created : %d", GetId());
 	}
 
 	OvtStream::~OvtStream()
 	{
 		Release();
 		Stop();
-		logtd("OvtStream Terminated : %d", GetId());
+		logtt("OvtStream Terminated : %d", GetId());
 	}
 
 	void OvtStream::Release()
@@ -711,7 +711,7 @@ namespace pvd
 				media_packet->SetDts(dts);
 				media_packet->SetDuration(-1); // Duration should be set by MediaRouter again due to the AdjustTimestampByBase
 
-				logtd("[%s/%s(%u)] ProcessMediaPacket : TrackId(%d) ORI_PTS(%lld) PTS(%lld) ORI_DTS(%lld) DTS(%lld) Size(%zu) MSID(%u)",
+				logtt("[%s/%s(%u)] ProcessMediaPacket : TrackId(%d) ORI_PTS(%lld) PTS(%lld) ORI_DTS(%lld) DTS(%lld) Size(%zu) MSID(%u)",
 					  GetApplicationInfo().GetVHostAppName().CStr(), GetName().CStr(), GetId(),
 					  media_packet->GetTrackId(), old_pts, media_packet->GetPts(), old_dts, media_packet->GetDts(), media_packet->GetDataLength(), GetMsid());
 

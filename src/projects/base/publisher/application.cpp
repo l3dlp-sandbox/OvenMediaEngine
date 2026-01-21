@@ -33,7 +33,7 @@ namespace pub
 
 		_stream_data_queue.SetUrn(urn);
 
-		logtd("%s ApplicationWorker has been created", _worker_name.CStr());
+		logtt("%s ApplicationWorker has been created", _worker_name.CStr());
 
 		return true;
 	}
@@ -300,7 +300,7 @@ namespace pub
 		if (stream_it == _streams.end())
 		{
 			// Sometimes stream rejects stream creation if the input codec is not supported. So this is a normal situation.
-			logtd("OnStreamDeleted failed. Cannot find stream : %s/%u", info->GetName().CStr(), info->GetId());
+			logtt("OnStreamDeleted failed. Cannot find stream : %s/%u", info->GetName().CStr(), info->GetId());
 			return true;
 		}
 
@@ -332,7 +332,7 @@ namespace pub
 		if (stream_it == _streams.end())
 		{
 			// Sometimes stream rejects stream creation if the input codec is not supported. So this is a normal situation.
-			logtd("OnStreamPrepared failed. Cannot find stream : %s/%u", info->GetName().CStr(), info->GetId());
+			logtt("OnStreamPrepared failed. Cannot find stream : %s/%u", info->GetName().CStr(), info->GetId());
 			return true;
 		}
 
@@ -359,7 +359,7 @@ namespace pub
 		if (stream_it == _streams.end())
 		{
 			// Sometimes stream rejects stream creation if the input codec is not supported. So this is a normal situation.
-			logtd("OnStreamUpdated failed. Cannot find stream : %s/%u", info->GetName().CStr(), info->GetId());
+			logtt("OnStreamUpdated failed. Cannot find stream : %s/%u", info->GetName().CStr(), info->GetId());
 			return true;
 		}
 

@@ -16,8 +16,8 @@
 #include "srt_private.h"
 #include "srt_session.h"
 
+#define logap(format, ...) logtp("[%s/%s(%u)] " format, GetApplicationName(), GetName().CStr(), GetId(), ##__VA_ARGS__)
 #define logat(format, ...) logtt("[%s/%s(%u)] " format, GetApplicationName(), GetName().CStr(), GetId(), ##__VA_ARGS__)
-#define logad(format, ...) logtd("[%s/%s(%u)] " format, GetApplicationName(), GetName().CStr(), GetId(), ##__VA_ARGS__)
 #define logai(format, ...) logti("[%s/%s(%u)] " format, GetApplicationName(), GetName().CStr(), GetId(), ##__VA_ARGS__)
 #define logaw(format, ...) logtw("[%s/%s(%u)] " format, GetApplicationName(), GetName().CStr(), GetId(), ##__VA_ARGS__)
 #define logae(format, ...) logte("[%s/%s(%u)] " format, GetApplicationName(), GetName().CStr(), GetId(), ##__VA_ARGS__)
@@ -39,12 +39,12 @@ namespace pub
 		: Stream(application, info),
 		  _worker_count(worker_count)
 	{
-		logad("SrtStream has been started");
+		logat("SrtStream has been started");
 	}
 
 	SrtStream::~SrtStream()
 	{
-		logad("SrtStream has been terminated finally");
+		logat("SrtStream has been terminated finally");
 	}
 
 	std::shared_ptr<const Stream::DefaultPlaylistInfo> SrtStream::GetDefaultPlaylistInfo() const
@@ -89,7 +89,7 @@ namespace pub
 					break;
 
 				default:
-					logad("SrtStream - Ignore unsupported media type: %s", GetMediaTypeString(track->GetMediaType()));
+					logat("SrtStream - Ignore unsupported media type: %s", GetMediaTypeString(track->GetMediaType()));
 					break;
 			}
 		}

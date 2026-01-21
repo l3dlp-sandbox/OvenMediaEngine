@@ -12,15 +12,15 @@
 
 #define OV_LOG_TAG "Config"
 
+#define logap(format, ...) logtp("[%p] " format, this, ##__VA_ARGS__)
 #define logat(format, ...) logtt("[%p] " format, this, ##__VA_ARGS__)
-#define logad(format, ...) logtd("[%p] " format, this, ##__VA_ARGS__)
 #define logai(format, ...) logti("[%p] " format, this, ##__VA_ARGS__)
 #define logaw(format, ...) logtw("[%p] " format, this, ##__VA_ARGS__)
 #define logae(format, ...) logte("[%p] " format, this, ##__VA_ARGS__)
 #define logac(format, ...) logtc("[%p] " format, this, ##__VA_ARGS__)
 
 #define HANDLE_CAST_EXCEPTION(value_type, prefix, ...) \
-	logad(                                             \
+	logat(                                             \
 		prefix                                         \
 		"Could not convert value:\n"                   \
 		"\tType: %s\n"                                 \

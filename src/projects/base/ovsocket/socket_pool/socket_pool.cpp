@@ -10,7 +10,7 @@
 
 #include "../socket_private.h"
 
-#define logad(format, ...) logtd("[%p] " format, this, ##__VA_ARGS__)
+#define logat(format, ...) logtt("[%p] " format, this, ##__VA_ARGS__)
 #define logai(format, ...) logti("[%p] " format, this, ##__VA_ARGS__)
 #define logaw(format, ...) logtw("[%p] " format, this, ##__VA_ARGS__)
 #define logae(format, ...) logte("[%p] " format, this, ##__VA_ARGS__)
@@ -81,7 +81,7 @@ namespace ov
 
 					for (auto worker : release_worker_list)
 					{
-						logad("Releasing idle worker: %s", worker->ToString().CStr());
+						logat("Releasing idle worker: %s", worker->ToString().CStr());
 						worker->Uninitialize();
 					}
 
@@ -111,7 +111,7 @@ namespace ov
 			auto pool	   = GetSharedPtr();
 			bool succeeded = true;
 
-			logad("Trying to initialize socket pool with %d workers...", worker_count);
+			logat("Trying to initialize socket pool with %d workers...", worker_count);
 
 			for (int index = 0; index < worker_count; index++)
 			{
@@ -135,7 +135,7 @@ namespace ov
 						std::make_move_iterator(worker_list.end()));
 				}
 
-				logad("%d workers were created successfully", worker_count);
+				logat("%d workers were created successfully", worker_count);
 				_initialized = true;
 			}
 			else
@@ -162,7 +162,7 @@ namespace ov
 
 	bool SocketPool::Uninitialize()
 	{
-		logad("Trying to uninitialize socket pool...");
+		logat("Trying to uninitialize socket pool...");
 
 		std::vector<std::shared_ptr<SocketPoolWorker>> worker_list;
 

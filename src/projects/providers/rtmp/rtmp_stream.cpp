@@ -95,7 +95,7 @@ namespace pvd
 
 		  _vhost_app_name(info::VHostAppName::InvalidVHostAppName())
 	{
-		logtd("Stream has been created");
+		logtt("Stream has been created");
 
 		_remote = client_socket;
 		SetMediaSource(_remote->GetRemoteAddressAsUrl());
@@ -110,7 +110,7 @@ namespace pvd
 
 	RtmpStream::~RtmpStream()
 	{
-		logtd("Stream has been terminated finally");
+		logtt("Stream has been terminated finally");
 	}
 
 	bool RtmpStream::Start()
@@ -197,7 +197,7 @@ namespace pvd
 			_remained_data->Append(data);
 		}
 
-		logtt("Trying to parse data\n%s", _remained_data->Dump(_remained_data->GetLength()).CStr());
+		logtp("Trying to parse data\n%s", _remained_data->Dump(_remained_data->GetLength()).CStr());
 
 		while (true)
 		{
@@ -214,7 +214,7 @@ namespace pvd
 
 			if (process_size < 0)
 			{
-				logtd("Could not process RTMP packet: [%s/%s] (%u/%u), size: %zu bytes, returns: %d",
+				logtt("Could not process RTMP packet: [%s/%s] (%u/%u), size: %zu bytes, returns: %d",
 					  _vhost_app_name.CStr(), _stream_name.CStr(),
 					  _app_id, GetId(),
 					  _remained_data->GetLength(),
@@ -226,7 +226,7 @@ namespace pvd
 			else if (process_size == 0)
 			{
 				// Need more data
-				// logtd("Not enough data");
+				// logtt("Not enough data");
 				break;
 			}
 
@@ -853,7 +853,7 @@ namespace pvd
 
 	bool RtmpStream::OnAmfDeleteStream(const std::shared_ptr<const RtmpChunkHeader> &header, AmfDocument &document, double transaction_id)
 	{
-		logtd("Delete Stream - stream(%s/%s) id(%u/%u)", _vhost_app_name.CStr(), _stream_name.CStr(), _app_id, GetId());
+		logtt("Delete Stream - stream(%s/%s) id(%u/%u)", _vhost_app_name.CStr(), _stream_name.CStr(), _app_id, GetId());
 
 		_media_info->video_stream_coming = false;
 		_media_info->audio_stream_coming = false;
@@ -923,12 +923,12 @@ namespace pvd
 		switch (_handshake_state)
 		{
 			case RtmpHandshakeState::Uninitialized:
-				logtd("Handshaking is started. Trying to parse for C0/C1 packets...");
+				logtt("Handshaking is started. Trying to parse for C0/C1 packets...");
 				process_size = (sizeof(uint8_t) + RTMP_HANDSHAKE_PACKET_SIZE);
 				break;
 
 			case RtmpHandshakeState::S2:
-				logtd("Trying to parse for C2 packet...");
+				logtt("Trying to parse for C2 packet...");
 				process_size = (RTMP_HANDSHAKE_PACKET_SIZE);
 				break;
 
@@ -940,17 +940,17 @@ namespace pvd
 		if (static_cast<int32_t>(data->GetLength()) < process_size)
 		{
 			// Need more data
-			logtd("Need more data: data: %zu bytes, expected: %d bytes", data->GetLength(), process_size);
+			logtt("Need more data: data: %zu bytes, expected: %d bytes", data->GetLength(), process_size);
 			return 0LL;
 		}
 
 		if (_handshake_state == RtmpHandshakeState::Uninitialized)
 		{
-			logtd("C0/C1 packets are arrived");
+			logtt("C0/C1 packets are arrived");
 
 			char version = data->At(0);
 
-			logtd("Trying to check RTMP version (%d)...", RTMP_HANDSHAKE_VERSION);
+			logtt("Trying to check RTMP version (%d)...", RTMP_HANDSHAKE_VERSION);
 
 			if (version != RTMP_HANDSHAKE_VERSION)
 			{
@@ -964,7 +964,7 @@ namespace pvd
 
 			// S0,S1,S2 전송
 
-			logtd("Trying to send S0/S1/S2 packets...");
+			logtt("Trying to send S0/S1/S2 packets...");
 
 			if (SendHandshake(send_packet) == false)
 			{
@@ -975,12 +975,12 @@ namespace pvd
 			return process_size;
 		}
 
-		logtd("C2 packet is arrived");
+		logtt("C2 packet is arrived");
 
 		_handshake_state = RtmpHandshakeState::C2;
 		_handshake_state = RtmpHandshakeState::Complete;
 
-		logtd("Handshake is completed");
+		logtt("Handshake is completed");
 
 		return process_size;
 	}
@@ -1009,8 +1009,8 @@ namespace pvd
 				case RtmpChunkParser::ParseResult::Parsed:
 					if (ReceiveChunkMessage() == false)
 					{
-						logtd("ReceiveChunkMessage Fail");
-						logtt("Failed to import packet\n%s", current_data->Dump(current_data->GetLength()).CStr());
+						logtt("ReceiveChunkMessage Fail");
+						logtp("Failed to import packet\n%s", current_data->Dump(current_data->GetLength()).CStr());
 
 						return -1LL;
 					}
@@ -1343,7 +1343,7 @@ namespace pvd
 		// Find it in Events
 		if (CheckEventMessage(message->header, document) == false)
 		{
-			logtd("There were no triggered events - Message(%s / %s)", message_name.CStr(), data_name.CStr());
+			logtt("There were no triggered events - Message(%s / %s)", message_name.CStr(), data_name.CStr());
 		}
 	}
 
@@ -1360,7 +1360,7 @@ namespace pvd
 			// AMFDataMessage.[<Property>.<Property>...<Property>.]<Object Name>.<Key Name>
 			if (trigger_list.size() < 3)
 			{
-				logtd("Invalid trigger: %s", trigger.CStr());
+				logtt("Invalid trigger: %s", trigger.CStr());
 				continue;
 			}
 
@@ -1376,7 +1376,7 @@ namespace pvd
 
 					if (property == nullptr)
 					{
-						logtd("Document has no property at %d: %s", size - 1, trigger.CStr());
+						logtt("Document has no property at %d: %s", size - 1, trigger.CStr());
 						break;
 					}
 
@@ -1391,7 +1391,7 @@ namespace pvd
 
 							if (object == nullptr)
 							{
-								logtd("Property is not object: %s", property->GetString().CStr());
+								logtt("Property is not object: %s", property->GetString().CStr());
 								break;
 							}
 
@@ -1416,7 +1416,7 @@ namespace pvd
 						}
 						else
 						{
-							logtd("Document property type mismatch at %d: %s", size - 1, property->GetString().CStr());
+							logtt("Document property type mismatch at %d: %s", size - 1, property->GetString().CStr());
 							break;
 						}
 					}
@@ -1424,7 +1424,7 @@ namespace pvd
 					{
 						if (trigger_list.at(size) != property->GetString())
 						{
-							logtd("Document property mismatch at %d: %s != %s", size - 1, trigger_list.at(size).CStr(), property->GetString().CStr());
+							logtt("Document property mismatch at %d: %s != %s", size - 1, trigger_list.at(size).CStr(), property->GetString().CStr());
 
 							break;
 						}
@@ -1438,7 +1438,7 @@ namespace pvd
 
 	void RtmpStream::GenerateEvent(const cfg::vhost::app::pvd::Event &event, const ov::String &value)
 	{
-		logtd("Event generated: %s / %s", event.GetTrigger().CStr(), value.CStr());
+		logtt("Event generated: %s / %s", event.GetTrigger().CStr(), value.CStr());
 
 		bool id3_enabled = false;
 		auto id3v2_event = event.GetHLSID3v2(&id3_enabled);

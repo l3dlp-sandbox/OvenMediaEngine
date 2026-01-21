@@ -17,8 +17,8 @@
 #include "srt_private.h"
 #include "srt_stream.h"
 
+#define logap(format, ...) logtp("[%s#%u] " format, GetAppStreamName().CStr(), GetId(), ##__VA_ARGS__)
 #define logat(format, ...) logtt("[%s#%u] " format, GetAppStreamName().CStr(), GetId(), ##__VA_ARGS__)
-#define logad(format, ...) logtd("[%s#%u] " format, GetAppStreamName().CStr(), GetId(), ##__VA_ARGS__)
 #define logai(format, ...) logti("[%s#%u] " format, GetAppStreamName().CStr(), GetId(), ##__VA_ARGS__)
 #define logaw(format, ...) logtw("[%s#%u] " format, GetAppStreamName().CStr(), GetId(), ##__VA_ARGS__)
 #define logae(format, ...) logte("[%s#%u] " format, GetAppStreamName().CStr(), GetId(), ##__VA_ARGS__)
@@ -60,7 +60,7 @@ namespace pub
 	{
 		Stop();
 
-		logad("SrtSession has finally been terminated");
+		logat("SrtSession has finally been terminated");
 
 		MonitorInstance->OnSessionDisconnected(*GetStream(), PublisherType::Srt);
 	}
@@ -79,13 +79,13 @@ namespace pub
 
 	bool SrtSession::Start()
 	{
-		logad("SrtSession will be started");
+		logat("SrtSession will be started");
 		return Session::Start();
 	}
 
 	bool SrtSession::Stop()
 	{
-		logad("SrtSession has stopped");
+		logat("SrtSession has stopped");
 		_connector->Close();
 		return Session::Stop();
 	}
@@ -100,7 +100,7 @@ namespace pub
 		}
 		catch (const std::bad_any_cast &e)
 		{
-			logad("An incorrect type of packet was input from the stream. (%s)", e.what());
+			logat("An incorrect type of packet was input from the stream. (%s)", e.what());
 
 			OV_ASSERT2(false);
 			return nullptr;

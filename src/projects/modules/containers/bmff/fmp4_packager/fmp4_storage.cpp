@@ -47,7 +47,7 @@ namespace bmff
 			logti("Successfully deleted directory for LLHLS DVR: %s", dvr_path.CStr());
 		}
 
-		logtd("FMP4 Storage has been terminated successfully");
+		logtt("FMP4 Storage has been terminated successfully");
 	}
 
 	std::shared_ptr<ov::Data> FMP4Storage::GetInitializationSection() const
@@ -359,7 +359,7 @@ namespace bmff
 			segment->SetCompleted();
 			CreateNextSegment();
 
-			logtd("Segment[%u] is created : track(%u), duration(%u) chunks(%u)", segment->GetNumber(), _track->GetId(),segment->GetDurationMs(), segment->GetPartialCount());
+			logtt("Segment[%u] is created : track(%u), duration(%u) chunks(%u)", segment->GetNumber(), _track->GetId(),segment->GetDurationMs(), segment->GetPartialCount());
 			
 			_total_expected_duration_ms += _config.segment_duration_ms;
 			_total_segment_duration_ms += segment->GetDurationMs();
@@ -389,7 +389,7 @@ namespace bmff
 
 			double next_target_duration = _total_expected_duration_ms - _total_segment_duration_ms + _config.segment_duration_ms;
 
-			logtd("LLHLS stream (%s) / track (%d) - segment_seq(%lld) segment_duration_ms: %f total_expected_duration_ms: %f, total_segment_duration_ms: %f, next_target_duration: %f",
+			logtt("LLHLS stream (%s) / track (%d) - segment_seq(%lld) segment_duration_ms: %f total_expected_duration_ms: %f, total_segment_duration_ms: %f, next_target_duration: %f",
 				_stream_tag.CStr(), _track->GetId(), segment->GetNumber(), segment->GetDurationMs(), _total_expected_duration_ms, _total_segment_duration_ms, next_target_duration);
 			
 			if (next_target_duration >= static_cast<double>(_config.segment_duration_ms)/2.0)
@@ -440,7 +440,7 @@ namespace bmff
 			// 	segment->SetMarkers({ marker });
 			// }
 
-			logtd("LLHLS stream (%s) / track (%d) - segment_duration_ms: %f total_expected_duration_ms: %f, total_segment_duration_ms: %f, next_target_duration: %f, target_segment_duration: %f has_marker: %d",
+			logtt("LLHLS stream (%s) / track (%d) - segment_duration_ms: %f total_expected_duration_ms: %f, total_segment_duration_ms: %f, next_target_duration: %f, target_segment_duration: %f has_marker: %d",
 				_stream_tag.CStr(), _track->GetId(), segment->GetDurationMs(), _total_expected_duration_ms, _total_segment_duration_ms, next_target_duration, _target_segment_duration_ms, segment->HasMarker());
 		}
 

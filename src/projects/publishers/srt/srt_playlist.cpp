@@ -17,8 +17,8 @@
 #define SRT_STREAM_DESC \
 	_stream_info->GetApplicationName(), _stream_info->GetName().CStr(), _stream_info->GetId()
 
+#define logap(format, ...) logtp("[%s/%s(%u)] " format, SRT_STREAM_DESC, ##__VA_ARGS__)
 #define logat(format, ...) logtt("[%s/%s(%u)] " format, SRT_STREAM_DESC, ##__VA_ARGS__)
-#define logad(format, ...) logtd("[%s/%s(%u)] " format, SRT_STREAM_DESC, ##__VA_ARGS__)
 #define logai(format, ...) logti("[%s/%s(%u)] " format, SRT_STREAM_DESC, ##__VA_ARGS__)
 #define logaw(format, ...) logtw("[%s/%s(%u)] " format, SRT_STREAM_DESC, ##__VA_ARGS__)
 #define logae(format, ...) logte("[%s/%s(%u)] " format, SRT_STREAM_DESC, ##__VA_ARGS__)
@@ -121,7 +121,7 @@ namespace pub
 			psi_data->Append(packet->GetData());
 		}
 
-		logat("OnPsi - %zu packets (total %zu bytes)", psi_packets.size(), psi_data->GetLength());
+		logap("OnPsi - %zu packets (total %zu bytes)", psi_packets.size(), psi_data->GetLength());
 
 		_psi_data = std::move(psi_data);
 
@@ -139,7 +139,7 @@ namespace pub
 			total_packet_size += packet->GetDataLength();
 		}
 
-		logat("OnFrame - %zu packets (total %zu bytes)", pes_packets.size(), total_packet_size);
+		logap("OnFrame - %zu packets (total %zu bytes)", pes_packets.size(), total_packet_size);
 #endif	// DEBUG
 
 		SendData(pes_packets);

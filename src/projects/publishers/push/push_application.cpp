@@ -36,7 +36,7 @@ namespace pub
 	PushApplication::~PushApplication()
 	{
 		Stop();
-		logtd("PushApplication(%d) has been terminated finally", GetId());
+		logtt("PushApplication(%d) has been terminated finally", GetId());
 	}
 
 	bool PushApplication::Start()
@@ -50,7 +50,7 @@ namespace pub
 
 		if (application_enabled == false)
 		{
-			logtd("%s PushApplication is disabled", GetVHostAppName().CStr());
+			logtt("%s PushApplication is disabled", GetVHostAppName().CStr());
 			return false;
 		}
 
@@ -112,7 +112,7 @@ namespace pub
 			StopPush(push);
 		}
 
-		logtd("%s/%s stream has been deleted", GetVHostAppName().CStr(), stream->GetName().CStr());
+		logtt("%s/%s stream has been deleted", GetVHostAppName().CStr(), stream->GetName().CStr());
 
 		return true;
 	}
@@ -256,7 +256,7 @@ namespace pub
 		auto session_state = session->GetState();
 		if (prev_session_state != session_state)
 		{
-			logtd("Changed push state. (%d - %d)", prev_session_state, session_state);
+			logtt("Changed push state. (%d - %d)", prev_session_state, session_state);
 		}
 	}
 
@@ -283,7 +283,7 @@ namespace pub
 		auto session_state = session->GetState();
 		if (prev_session_state != session_state)
 		{
-			logtd("Changed push state. (%d - %d)", prev_session_state, session_state);
+			logtt("Changed push state. (%d - %d)", prev_session_state, session_state);
 		}
 	}
 
@@ -326,7 +326,7 @@ namespace pub
 					auto stream = GetStream(push->GetStreamName());
 					if (stream == nullptr || stream->GetState() != pub::Stream::State::STARTED)
 					{
-						logtd("There is no stream for Push or it has not started. %s", push->GetInfoString().CStr());
+						logtt("There is no stream for Push or it has not started. %s", push->GetInfoString().CStr());
 						push->SetState(info::Push::PushState::Ready);
 						continue;
 					}

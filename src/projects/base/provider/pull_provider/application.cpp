@@ -118,7 +118,7 @@ namespace pvd
 							{
 								auto failback_url = stream->GetPrimaryURL()->ToUrlString(true);
 							
-								logtd("%s/%s(%u) Attempt to connect to verify that the primary stream is available. url(%s)", stream->GetApplicationInfo().GetVHostAppName().CStr(), stream->GetName().CStr(), stream->GetId(), failback_url.CStr());
+								logtt("%s/%s(%u) Attempt to connect to verify that the primary stream is available. url(%s)", stream->GetApplicationInfo().GetVHostAppName().CStr(), stream->GetName().CStr(), stream->GetId(), failback_url.CStr());
 							
 								auto ping_props = std::make_shared<pvd::PullStreamProperties>();
 								ping_props->SetRetryCount(0);
@@ -139,7 +139,7 @@ namespace pvd
 								}
 								else 
 								{
-									logtd("%s/%s(%u) primary stream is not available.", stream->GetApplicationInfo().GetVHostAppName().CStr(), stream->GetName().CStr(), stream->GetId());
+									logtt("%s/%s(%u) primary stream is not available.", stream->GetApplicationInfo().GetVHostAppName().CStr(), stream->GetName().CStr(), stream->GetId());
 								}
 
 								props->UpdateFailbackCheckTime();

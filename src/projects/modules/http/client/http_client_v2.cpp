@@ -182,7 +182,7 @@ namespace http
 				}
 				else
 				{
-					logtd("Could not connect TLS: %s", error->What());
+					logtt("Could not connect TLS: %s", error->What());
 					HandleError(error);
 				}
 
@@ -406,7 +406,7 @@ namespace http
 			ov::String request_header;
 
 			// Make HTTP 1.1 request header
-			logtd("Request resource: %s", path.CStr());
+			logtt("Request resource: %s", path.CStr());
 
 			// Pick a first method in _method
 			request_header.AppendFormat("%s %s HTTP/1.1" HTTP_CLIENT_NEW_LINE, http::StringFromMethod(_method, false).CStr(), path.CStr());
@@ -416,12 +416,12 @@ namespace http
 				_request_header_map["Content-Length"] = ov::Converter::ToString(_request_body->GetLength());
 			}
 
-			logtd("Request headers: total %zu item(s):", _request_header_map.size());
+			logtt("Request headers: total %zu item(s):", _request_header_map.size());
 
 			for (auto header : _request_header_map)
 			{
 				request_header.AppendFormat("%s: %s" HTTP_CLIENT_NEW_LINE, header.first.CStr(), header.second.CStr());
-				logtd("  >> %s: %s", header.first.CStr(), header.second.CStr());
+				logtt("  >> %s: %s", header.first.CStr(), header.second.CStr());
 			}
 
 			request_header.Append(HTTP_CLIENT_NEW_LINE);
@@ -466,7 +466,7 @@ namespace http
 				OV_ASSERT2(_url.IsEmpty() == false);
 				OV_ASSERT2(_parsed_url != nullptr);
 
-				logtd("Request an URL: %s (address: %s)...", url.CStr(), address.ToString(false).CStr());
+				logtt("Request an URL: %s (address: %s)...", url.CStr(), address.ToString(false).CStr());
 
 				// Convert milliseconds to timeval
 				_socket->SetRecvTimeout(

@@ -57,14 +57,14 @@ HlsSession::HlsSession(const info::Session &session_info,
 		_session_key = ov::Random::GenerateString(8);
 	}
 
-	logtd("TsSession::TsSession (%d)", session_info.GetId());
+	logtt("TsSession::TsSession (%d)", session_info.GetId());
 	MonitorInstance->OnSessionConnected(*stream, PublisherType::Hls);
 	_number_of_players = 1;
 }
 
 HlsSession::~HlsSession()
 {
-	logtd("TsSession::~TsSession(%d)", GetId());
+	logtt("TsSession::~TsSession(%d)", GetId());
 	MonitorInstance->OnSessionsDisconnected(*GetStream(), PublisherType::Hls, _number_of_players);
 }
 
@@ -97,7 +97,7 @@ void HlsSession::UpdateLastRequest(uint32_t connection_id)
 	std::lock_guard<std::shared_mutex> lock(_last_request_time_guard);
 	_last_request_time[connection_id] = ov::Clock::NowMSec();
 
-	logtd("TsSession(%u) : Request updated from %u : size(%d)", GetId(), connection_id, _last_request_time.size());
+	logtt("TsSession(%u) : Request updated from %u : size(%d)", GetId(), connection_id, _last_request_time.size());
 }
 
 uint64_t HlsSession::GetLastRequestTime(uint32_t connection_id) const
@@ -118,7 +118,7 @@ void HlsSession::OnConnectionDisconnected(uint32_t connection_id)
 	std::lock_guard<std::shared_mutex> lock(_last_request_time_guard);
 	_last_request_time.erase(connection_id);
 
-	logtd("TsSession(%u) : Disconnected from %u : size(%d)", GetId(), connection_id, _last_request_time.size());
+	logtt("TsSession(%u) : Disconnected from %u : size(%d)", GetId(), connection_id, _last_request_time.size());
 }
 
 bool HlsSession::IsNoConnection() const
@@ -160,7 +160,7 @@ void HlsSession::OnMessageReceived(const std::any &message)
 		return;
 	}
 
-	logtd("TsSession::OnMessageReceived(%u) - %s", GetId(), exchange->ToString().CStr());
+	logtt("TsSession::OnMessageReceived(%u) - %s", GetId(), exchange->ToString().CStr());
 
 	auto request = exchange->GetRequest();
 	auto request_uri = request->GetParsedUri();
@@ -420,7 +420,7 @@ void HlsSession::ResponseData(const std::shared_ptr<http::svr::HttpExchange> &ex
 		MonitorInstance->IncreaseBytesOut(*GetStream(), PublisherType::Hls, sent_size);
 	}
 
-	logtd("\n%s", exchange->GetDebugInfo().CStr());
+	logtt("\n%s", exchange->GetDebugInfo().CStr());
 
 	// Terminate the HTTP/2 stream
 	exchange->Release();

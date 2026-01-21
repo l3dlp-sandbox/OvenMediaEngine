@@ -19,7 +19,7 @@ namespace webvtt
 
 	Packager::~Packager()
 	{
-		logtd("WebVTT Packager has been terminated finally");
+		logtt("WebVTT Packager has been terminated finally");
 	}
 
 	bool Packager::AddFrame(const std::shared_ptr<WebVTTFrame> &frame)

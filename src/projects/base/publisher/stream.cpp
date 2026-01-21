@@ -47,7 +47,7 @@ namespace pub
 		}
 
 		ov::String worker_name = ov::String::FormatString("%s/%s/%s", _parent->GetApplicationTypeName(), _parent->GetApplicationName(), _parent->GetName().CStr());
-		logtd("Try to stop StreamWorker thread of %s", worker_name.CStr());
+		logtt("Try to stop StreamWorker thread of %s", worker_name.CStr());
 
 		_stop_thread_flag = true;
 		// Generate Event
@@ -60,18 +60,18 @@ namespace pub
 			_worker_thread.join();
 		}
 
-		logtd("StreamWorker thread of %s has been stopped successfully", worker_name.CStr());
+		logtt("StreamWorker thread of %s has been stopped successfully", worker_name.CStr());
 
 		std::lock_guard<std::shared_mutex> lock(_session_map_mutex);
 
-		logtd("Try to stop all sessions of %s", worker_name.CStr());
+		logtt("Try to stop all sessions of %s", worker_name.CStr());
 		for (auto const &x : _sessions)
 		{
 			auto session = std::static_pointer_cast<Session>(x.second);
 			session->Stop();
 		}
 		_sessions.clear();
-		logtd("All sessions(%d) of %s has been stopped successfully", _sessions.size(), worker_name.CStr());
+		logtt("All sessions(%d) of %s has been stopped successfully", _sessions.size(), worker_name.CStr());
 
 		return true;
 	}
@@ -398,7 +398,7 @@ namespace pub
 			auto session_iterator = _sessions.find(id);
 			if (session_iterator == _sessions.end())
 			{
-				logtd("Cannot find session : %u", id);
+				logtt("Cannot find session : %u", id);
 				return false;
 			}
 			_sessions.erase(session_iterator);
@@ -504,7 +504,7 @@ namespace pub
 					{
 						auto old_language = track->GetLanguage();
 						track->SetLanguage(command->GetLanguage());
-						logtd("[%s/%s(%u)] Subtitle track language has been updated %s -> %s", GetApplicationName(), GetName().CStr(), GetId(), old_language.CStr(), track->GetLanguage().CStr());
+						logtt("[%s/%s(%u)] Subtitle track language has been updated %s -> %s", GetApplicationName(), GetName().CStr(), GetId(), old_language.CStr(), track->GetLanguage().CStr());
 					}
 					else
 					{

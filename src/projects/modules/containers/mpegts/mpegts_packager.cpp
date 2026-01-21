@@ -91,7 +91,7 @@ namespace mpegts
 
     void Packager::OnPsi(const std::vector<std::shared_ptr<const MediaTrack>> &tracks, const std::vector<std::shared_ptr<mpegts::Packet>> &psi_packets)
     {
-        logtd("OnPsi %u tracks", tracks.size());
+        logtt("OnPsi %u tracks", tracks.size());
 
         for (const auto &track : tracks)
         {   
@@ -179,7 +179,7 @@ namespace mpegts
 
     void Packager::OnFrame(const std::shared_ptr<const MediaPacket> &media_packet, const std::vector<std::shared_ptr<mpegts::Packet>> &pes_packets)
     {
-       //logtd("OnFrame track_id %u", media_packet->GetTrackId());
+       //logtt("OnFrame track_id %u", media_packet->GetTrackId());
 
         auto track_id = media_packet->GetTrackId();
         auto track = GetMediaTrack(track_id);
@@ -263,7 +263,7 @@ namespace mpegts
 		std::vector<std::shared_ptr<Marker>> markers;
 		if (HasMarker(main_segment_end_timestamp) == true)
 		{
-			logtd("Stream(%s) Main Track(%u) main_segment_base_timestamp(%lld) main_segment_duration(%lld) main_segment_duration_ms(%f) main_segment_end_timestamp(%lld)", _config.stream_id_meta.CStr(), _main_track_id, main_segment_base_timestamp, main_segment_duration, main_segment_duration_ms, main_segment_end_timestamp);
+			logtt("Stream(%s) Main Track(%u) main_segment_base_timestamp(%lld) main_segment_duration(%lld) main_segment_duration_ms(%f) main_segment_end_timestamp(%lld)", _config.stream_id_meta.CStr(), _main_track_id, main_segment_base_timestamp, main_segment_duration, main_segment_duration_ms, main_segment_end_timestamp);
 
 			markers = PopMarkers(main_segment_end_timestamp);
 			force_create = true;
@@ -528,7 +528,7 @@ namespace mpegts
 			return;
 		}
 
-		logtd("Saved segment to file: %s", file_path.CStr());
+		logtt("Saved segment to file: %s", file_path.CStr());
 
 		// Add segment info
 		{
@@ -597,7 +597,7 @@ namespace mpegts
 			return;
 		}
 
-		logtd("Deleted segment file: %s", file_path.CStr());
+		logtt("Deleted segment file: %s", file_path.CStr());
 	}
 
 	void Packager::SaveSegmentToRetentionBuffer(const std::shared_ptr<Segment> &segment)
@@ -606,7 +606,7 @@ namespace mpegts
 			std::lock_guard<std::shared_mutex> lock(_retained_segments_guard);
 			_retained_segments.emplace(segment->GetId(), segment);
 
-			logtd("Saved segment to retention buffer: %u", segment->GetId());
+			logtt("Saved segment to retention buffer: %u", segment->GetId());
 
 			// When a segment queues the retention buffer, it is notified that the segment has been deleted. 
 			// And the retention buffer stores this as much as count. 

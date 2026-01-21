@@ -40,7 +40,7 @@ namespace pub
 	PushSession::~PushSession()
 	{
 		Stop();
-		logtd("PushSession(%d) has been terminated finally", GetId());
+		logtt("PushSession(%d) has been terminated finally", GetId());
 		MonitorInstance->OnSessionDisconnected(*GetStream(), PublisherType::Push);
 	}
 
@@ -105,13 +105,13 @@ namespace pub
 
 			if (IsSupportTrack(GetPush()->GetProtocolType(), track) == false)
 			{
-				logtd("Could not supported track. track_id:%d, codec_id: %d", track->GetId(), track->GetCodecId());
+				logtt("Could not supported track. track_id:%d, codec_id: %d", track->GetId(), track->GetCodecId());
 				continue;
 			}
 
 			if (IsSupportCodec(GetPush()->GetProtocolType(), track->GetCodecId()) == false)
 			{
-				logtd("Could not supported codec. track_id:%d, codec_id: %d", track->GetId(), track->GetCodecId());
+				logtt("Could not supported codec. track_id:%d, codec_id: %d", track->GetId(), track->GetCodecId());
 				continue;
 			}
 
@@ -136,7 +136,7 @@ namespace pub
 
 		GetPush()->SetState(info::Push::PushState::Pushing);
 
-		logtd("PushSession(%d) has started.", GetId());
+		logtt("PushSession(%d) has started.", GetId());
 
 		return Session::Start();
 	}
@@ -163,7 +163,7 @@ namespace pub
 
 			DestoryWriter();
 
-			logtd("PushSession(%d) has stopped", GetId());
+			logtt("PushSession(%d) has stopped", GetId());
 		}
 
 		return Session::Stop();
@@ -188,7 +188,7 @@ namespace pub
 		}
 		catch (const std::bad_any_cast &e)
 		{
-			logtd("An incorrect type of packet was input from the stream. (%s)", e.what());
+			logtt("An incorrect type of packet was input from the stream. (%s)", e.what());
 
 			return;
 		}

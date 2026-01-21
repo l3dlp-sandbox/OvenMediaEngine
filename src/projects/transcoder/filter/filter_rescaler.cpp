@@ -682,7 +682,7 @@ void FilterRescaler::WorkerThread()
 			{
 				skip_frames_last_check_time = curr_time;
 
-				logtd("SkipFrames(%d), Current FPS(%.2f), Expected FPS(%.2f), Threshold FPS(%.2f), Queue(%d/%d)",
+				logtt("SkipFrames(%d), Current FPS(%.2f), Expected FPS(%.2f), Threshold FPS(%.2f), Queue(%d/%d)",
 					  skip_frames,
 					  _fps_filter.GetOutputFramesPerSecond(),
 					  _fps_filter.GetExpectedOutputFramesPerSecond(),
@@ -748,7 +748,7 @@ void FilterRescaler::WorkerThread()
 			auto recommended_output_framerate = TranscoderStreamInternal::MeasurementToRecommendFramerate(_input_track->GetFrameRate());
 			if (_fps_filter.GetOutputFrameRate() != recommended_output_framerate)
 			{
-				logtd("Change output framerate. Input: %.2ffps, Output: %.2f -> %.2ffps", _input_track->GetFrameRate(), _fps_filter.GetOutputFrameRate(), recommended_output_framerate);
+				logtt("Change output framerate. Input: %.2ffps, Output: %.2f -> %.2ffps", _input_track->GetFrameRate(), _fps_filter.GetOutputFrameRate(), recommended_output_framerate);
 				_fps_filter.SetOutputFrameRate(recommended_output_framerate);
 			}
 		}

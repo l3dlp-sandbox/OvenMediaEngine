@@ -76,7 +76,7 @@ namespace info
 
 	Stream::~Stream()
 	{
-		logd("DEBUG", "Stream (%s / %s) Destroyed", GetName().CStr(), GetUUID().CStr());
+		logt("DEBUG", "Stream (%s / %s) Destroyed", GetName().CStr(), GetUUID().CStr());
 	}
 
 	bool Stream::operator==(const Stream &stream_info) const

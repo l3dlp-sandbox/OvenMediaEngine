@@ -167,7 +167,7 @@ namespace ffmpeg
 		std::lock_guard<std::shared_mutex> mlock(_track_map_lock);
 		_av_track_map[media_track->GetId()] = std::make_pair(av_stream, media_track);
 
-		logtd("Added %s track. id(%d), codec(%s), format(%s)",
+		logtt("Added %s track. id(%d), codec(%s), format(%s)",
 			  cmn::GetMediaTypeString(media_track->GetMediaType()),
 			  media_track->GetId(),
 			  ffmpeg::compat::GetCodecName(av_stream->codecpar->codec_id).CStr(),
@@ -181,7 +181,7 @@ namespace ffmpeg
 		std::lock_guard<std::shared_mutex> mlock(_track_map_lock);
 		_event_track_map[std::make_pair(media_track->GetId(), format)] = std::make_pair(av_stream, media_track);
 
-		logtd("Added %s track. id(%d), codec(%s), format(%s)",
+		logtt("Added %s track. id(%d), codec(%s), format(%s)",
 			  cmn::GetMediaTypeString(media_track->GetMediaType()),
 			  media_track->GetId(),
 			  ffmpeg::compat::GetCodecName(av_stream->codecpar->codec_id).CStr(),
@@ -403,7 +403,7 @@ namespace ffmpeg
 		// But this is not treated as an error.
 		if(av_packet.pts < 0 || av_packet.dts < 0 || av_packet.size <= 0)
 		{
-			logtd("To avoid negative timestamps, the packet is dropped. track:%d, pts:%lld, dts:%lld", media_track->GetId(), av_packet.pts, av_packet.dts);
+			logtt("To avoid negative timestamps, the packet is dropped. track:%d, pts:%lld, dts:%lld", media_track->GetId(), av_packet.pts, av_packet.dts);
 			av_packet_unref(&av_packet);
 			return true;
 		}

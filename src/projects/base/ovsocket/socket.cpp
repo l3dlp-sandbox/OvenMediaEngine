@@ -23,8 +23,8 @@
 #include "socket_private.h"
 #include "socket_utilities.h"
 
+#define logap(format, ...) logtp("[#%d] [%p] " format, (GetNativeHandle() == -1) ? 0 : GetNativeHandle(), this, ##__VA_ARGS__)
 #define logat(format, ...) logtt("[#%d] [%p] " format, (GetNativeHandle() == -1) ? 0 : GetNativeHandle(), this, ##__VA_ARGS__)
-#define logad(format, ...) logtd("[#%d] [%p] " format, (GetNativeHandle() == -1) ? 0 : GetNativeHandle(), this, ##__VA_ARGS__)
 #define logai(format, ...) logti("[#%d] [%p] " format, (GetNativeHandle() == -1) ? 0 : GetNativeHandle(), this, ##__VA_ARGS__)
 #define logaw(format, ...) logtw("[#%d] [%p] " format, (GetNativeHandle() == -1) ? 0 : GetNativeHandle(), this, ##__VA_ARGS__)
 #define logae(format, ...) logte("[#%d] [%p] " format, (GetNativeHandle() == -1) ? 0 : GetNativeHandle(), this, ##__VA_ARGS__)
@@ -105,7 +105,7 @@ namespace ov
 			return false;
 		}
 
-		logad("Trying to create new socket (type: %d)...", type);
+		logat("Trying to create new socket (type: %d)...", type);
 
 		switch (type)
 		{
@@ -130,7 +130,7 @@ namespace ov
 				break;
 			}
 
-			logad("Socket descriptor is created (%s/%s)",
+			logat("Socket descriptor is created (%s/%s)",
 				  StringFromSocketFamily(family),
 				  StringFromSocketType(type));
 
@@ -412,7 +412,7 @@ namespace ov
 			return false;
 		}
 
-		logad("Binding to %s...", address.ToString().CStr());
+		logat("Binding to %s...", address.ToString().CStr());
 
 		switch (GetType())
 		{
@@ -462,7 +462,7 @@ namespace ov
 		}
 
 		SetState(SocketState::Bound);
-		logad("Bound successfully");
+		logat("Bound successfully");
 
 		return true;
 	}
@@ -608,7 +608,7 @@ namespace ov
 
 				SetState(SocketState::Connecting);
 
-				logad("Trying to connect to %s...", endpoint.ToString().CStr());
+				logat("Trying to connect to %s...", endpoint.ToString().CStr());
 				int result = ::connect(GetNativeHandle(), endpoint, endpoint.GetSockAddrInLength());
 
 				if (result == 0)
@@ -658,7 +658,7 @@ namespace ov
 							GetSockOpt(SO_ERROR, &so_error);
 
 							socket_error = SocketError::CreateError(so_error, "Connection timed out (%d ms elapsed, SO_ERROR: %d)", timeout_msec, so_error);
-							logad("%s", socket_error->What());
+							logat("%s", socket_error->What());
 						}
 
 						// Restore blocking state
@@ -796,7 +796,7 @@ namespace ov
 
 	void Socket::SetState(SocketState state)
 	{
-		logad("Socket state is changed: %s => %s",
+		logat("Socket state is changed: %s => %s",
 			  StringFromSocketState(_state),
 			  StringFromSocketState(state));
 
@@ -855,7 +855,7 @@ namespace ov
 		ssize_t sent_bytes = 0;
 		auto &data = command.data;
 
-		logat("Dispatching event: %s", command.ToString().CStr());
+		logap("Dispatching event: %s", command.ToString().CStr());
 
 		switch (command.type)
 		{
@@ -886,7 +886,7 @@ namespace ov
 				return WaitForHalfClose();
 
 			case DispatchCommand::Type::Close: {
-				logad("Trying to close the socket...");
+				logat("Trying to close the socket...");
 
 				CloseInternal(command.new_state);
 
@@ -911,11 +911,11 @@ namespace ov
 			command.UpdateTime();
 			data = data->Subdata(sent_bytes);
 
-			logad("Part of the data has been sent: %ld bytes, left: %ld bytes (%s)", sent_bytes, data->GetLength(), command.ToString().CStr());
+			logat("Part of the data has been sent: %ld bytes, left: %ld bytes (%s)", sent_bytes, data->GetLength(), command.ToString().CStr());
 		}
 		else
 		{
-			// logad("Could not send data: %ld bytes (%s)", data->GetLength(), command.ToString().CStr());
+			// logat("Could not send data: %ld bytes (%s)", data->GetLength(), command.ToString().CStr());
 		}
 
 		return DispatchResult::PartialDispatched;
@@ -943,7 +943,7 @@ namespace ov
 
 			if (_dispatch_queue.empty() == false)
 			{
-				logat("Dispatching events (count: %zu)...", _dispatch_queue.size());
+				logap("Dispatching events (count: %zu)...", _dispatch_queue.size());
 
 				while (_dispatch_queue.empty() == false)
 				{
@@ -955,11 +955,11 @@ namespace ov
 					if ((GetState() == SocketState::Closed) && (is_close_command == false))
 					{
 						// If the socket is closed during dispatching, the rest of the data will not be sent.
-						logad("Some commands have not been dispatched: %zu commands", _dispatch_queue.size());
+						logat("Some commands have not been dispatched: %zu commands", _dispatch_queue.size());
 #if DEBUG
 						for (auto &queue : _dispatch_queue)
 						{
-							logad("  - Command: %s", queue.ToString().CStr());
+							logat("  - Command: %s", queue.ToString().CStr());
 						}
 #endif	// DEBUG
 
@@ -1050,7 +1050,7 @@ namespace ov
 
 	void Socket::OnDataAvailableEvent()
 	{
-		logad("Socket is ready to read");
+		logat("Socket is ready to read");
 
 		if (_callback != nullptr)
 		{
@@ -1116,7 +1116,7 @@ namespace ov
 		size_t remaining_bytes = data->GetLength();
 		size_t total_sent_bytes = 0L;
 
-		logat("Trying to send data %zu bytes...", remaining_bytes);
+		logap("Trying to send data %zu bytes...", remaining_bytes);
 
 		while ((remaining_bytes > 0L) && (_force_stop == false))
 		{
@@ -1138,7 +1138,7 @@ namespace ov
 			UpdateLastSentTime();
 		}
 
-		logat("%zu bytes sent", total_sent_bytes);
+		logap("%zu bytes sent", total_sent_bytes);
 		return total_sent_bytes;
 	}
 
@@ -1149,7 +1149,7 @@ namespace ov
 		size_t remaining_bytes = data->GetLength();
 		size_t total_sent_bytes = 0L;
 
-		logat("Trying to send data %zu bytes...", remaining_bytes);
+		logap("Trying to send data %zu bytes...", remaining_bytes);
 
 		while ((remaining_bytes > 0L) && (_force_stop == false))
 		{
@@ -1185,7 +1185,7 @@ namespace ov
 			UpdateLastSentTime();
 		}
 
-		logat("%zu bytes sent", total_sent_bytes);
+		logap("%zu bytes sent", total_sent_bytes);
 		return total_sent_bytes;
 	}
 
@@ -1252,7 +1252,7 @@ namespace ov
 		size_t remaining_bytes = data->GetLength();
 		size_t total_sent_bytes = 0L;
 
-		logat("Trying to send data %zu bytes to %s...", remaining_bytes, address.ToString(false).CStr());
+		logap("Trying to send data %zu bytes to %s...", remaining_bytes, address.ToString(false).CStr());
 
 		while ((remaining_bytes > 0L) && (_force_stop == false))
 		{
@@ -1274,7 +1274,7 @@ namespace ov
 			UpdateLastSentTime();
 		}
 
-		logat("%zu bytes sent", total_sent_bytes);
+		logap("%zu bytes sent", total_sent_bytes);
 		return total_sent_bytes;
 	}
 
@@ -1379,7 +1379,7 @@ namespace ov
 			*total_sent_bytes += sent;
 		}
 
-		logtt("[#%d] %zu bytes sent", socket_handle, *total_sent_bytes);
+		logtp("[#%d] %zu bytes sent", socket_handle, *total_sent_bytes);
 
 		return true;
 	}
@@ -1399,7 +1399,7 @@ namespace ov
 
 		const auto data_length = data->GetLength();
 
-		logat("Trying to send data %zu bytes to %s from %s...",
+		logap("Trying to send data %zu bytes to %s from %s...",
 			  data_length,
 			  remote_address.ToString().CStr(), local_address.ToString().CStr());
 
@@ -1514,7 +1514,7 @@ namespace ov
 		OV_ASSERT2(data != nullptr);
 		OV_ASSERT2(received_length != nullptr);
 
-		logat("Trying to read from the socket...");
+		logap("Trying to read from the socket...");
 
 		ssize_t read_bytes = -1;
 		std::shared_ptr<SocketError> socket_error;
@@ -1594,7 +1594,7 @@ namespace ov
 				((_socket.GetType() != SocketType::Srt) && (read_bytes == 0L)) ||
 				((_socket.GetType() == SocketType::Srt) && (socket_error->GetCode() == SRT_ECONNLOST)))
 			{
-				logtd("Remote is disconnected with error: %s", socket_error->What());
+				logtt("Remote is disconnected with error: %s", socket_error->What());
 
 				socket_error = SocketError::CreateError("Remote is disconnected");
 				*received_length = 0UL;
@@ -1662,7 +1662,7 @@ namespace ov
 		}
 		else
 		{
-			logat("%zd bytes read", read_bytes);
+			logap("%zd bytes read", read_bytes);
 			*received_length = static_cast<size_t>(read_bytes);
 			UpdateLastRecvTime();
 		}
@@ -1755,7 +1755,7 @@ namespace ov
 				sockaddr_storage remote{};
 				socklen_t remote_length = sizeof(remote);
 
-				logad("Trying to read from the socket...");
+				logat("Trying to read from the socket...");
 				data->SetLength(data->GetCapacity());
 
 				iovec iov{};
@@ -1797,7 +1797,7 @@ namespace ov
 				}
 				else
 				{
-					logad("%zd bytes read", read_bytes);
+					logat("%zd bytes read", read_bytes);
 
 					data->SetLength(read_bytes);
 
@@ -1888,7 +1888,7 @@ namespace ov
 	{
 		CHECK_STATE(>= SocketState::Closed, false);
 
-		logad("Closing [%s] with state %s...",
+		logat("Closing [%s] with state %s...",
 			  (GetRemoteAddress() != nullptr)
 				  ? GetRemoteAddress()->ToString(false).CStr()
 				  : GetStreamId().CStr(),
@@ -1948,7 +1948,7 @@ namespace ov
 
 				if (_has_close_command == false)
 				{
-					logad("Enqueuing close command (new_state: %s)", StringFromSocketState(new_state));
+					logat("Enqueuing close command (new_state: %s)", StringFromSocketState(new_state));
 
 					_has_close_command = true;
 
@@ -1962,7 +1962,7 @@ namespace ov
 				}
 				else
 				{
-					logad("This socket already has close command (Do not need to call Close*() in this case)\n%s", StackTrace::GetStackTrace().CStr());
+					logat("This socket already has close command (Do not need to call Close*() in this case)\n%s", StackTrace::GetStackTrace().CStr());
 				}
 
 				_worker->EnqueueToDispatchLater(GetSharedPtr());
@@ -2082,7 +2082,7 @@ namespace ov
 			}
 			else if (result == 0)
 			{
-				logad("Half closed");
+				logat("Half closed");
 				return DispatchResult::Dispatched;
 			}
 			else
@@ -2132,7 +2132,7 @@ namespace ov
 #if DEBUG
 					for (auto &queue : _dispatch_queue)
 					{
-						logad("  - Command: %s", queue.ToString().CStr());
+						logat("  - Command: %s", queue.ToString().CStr());
 					}
 #endif	// DEBUG
 				}
@@ -2140,12 +2140,12 @@ namespace ov
 
 			_dispatch_queue.clear();
 
-			logad("Socket is closed successfully");
+			logat("Socket is closed successfully");
 
 			return true;
 		}
 
-		logad("Socket is already closed");
+		logat("Socket is already closed");
 		OV_ASSERT(((_state == SocketState::Closed) ||
 				   (_state == SocketState::Disconnected) ||
 				   (_state == SocketState::Error)),

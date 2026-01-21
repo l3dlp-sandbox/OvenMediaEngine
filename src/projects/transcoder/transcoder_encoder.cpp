@@ -41,7 +41,7 @@
 
 std::shared_ptr<std::vector<std::shared_ptr<info::CodecCandidate>>> TranscodeEncoder::GetCandidates(bool hwaccels_enable, ov::String hwaccles_modules, std::shared_ptr<MediaTrack> track)
 {
-	logtd("Track(%d) Codec(%s), HWAccels.Enable(%s), HWAccels.Modules(%s), Encode.Modules(%s)",
+	logtt("Track(%d) Codec(%s), HWAccels.Enable(%s), HWAccels.Modules(%s), Encode.Modules(%s)",
 		  track->GetId(),
 		  cmn::GetCodecIdString(track->GetCodecId()),
 		  hwaccels_enable ? "true" : "false",
@@ -144,7 +144,7 @@ std::shared_ptr<std::vector<std::shared_ptr<info::CodecCandidate>>> TranscodeEnc
 	{
 		(void)(candidate);
 		
-		logtd("Candidate module: %s(%d), %s(%d):%d",
+		logtt("Candidate module: %s(%d), %s(%d):%d",
 			  cmn::GetCodecIdString(candidate->GetCodecId()),
 			  candidate->GetCodecId(),
 			  cmn::GetCodecModuleIdString(candidate->GetModuleId()),
@@ -321,7 +321,7 @@ done:
 	if (encoder)
 	{
 
-		logtd("The encoder has been created. track(#%d), codec(%s), module(%s:%d)",
+		logtt("The encoder has been created. track(#%d), codec(%s), module(%s:%d)",
 			  track->GetId(),
 			  cmn::GetCodecIdString(track->GetCodecId()),
 			  cmn::GetCodecModuleIdString(track->GetCodecModuleId()),
@@ -462,7 +462,7 @@ void TranscodeEncoder::Stop()
 	if (_codec_thread.joinable())
 	{
 		_codec_thread.join();
-		logtd(ov::String::FormatString("encoder %s thread has ended", cmn::GetCodecIdString(GetCodecID())).CStr());
+		logtt(ov::String::FormatString("encoder %s thread has ended", cmn::GetCodecIdString(GetCodecID())).CStr());
 	}
 
 	tc::TranscodeModules::GetInstance()->OnDeleted(true, GetCodecID(), GetModuleID(), GetDeviceID());
@@ -667,7 +667,7 @@ void TranscodeEncoder::CodecThread()
 		_force_keyframe_by_time_interval = 0;
 		_accumulate_frame_duration		 = -1;
 
-		logtd("Force keyframe by time interval is disabled.");
+		logtt("Force keyframe by time interval is disabled.");
 	}
 
 	[[maybe_unused]] 

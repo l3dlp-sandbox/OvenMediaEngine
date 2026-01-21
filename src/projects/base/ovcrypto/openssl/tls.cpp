@@ -368,7 +368,7 @@ namespace ov
 				// Call SSL_get_error() with the return value ret to find out the reason.
 
 				auto get_error = GetError(result);
-				logtd("Tls::Write()::SSL_write returns %d %d, errno: %d", result, get_error, errno);
+				logtt("Tls::Write()::SSL_write returns %d %d, errno: %d", result, get_error, errno);
 				return get_error;
 			}
 
@@ -475,11 +475,11 @@ namespace ov
 		OV_ASSERT2(in != nullptr);
 		OV_ASSERT2(inl >= 0);
 
-		logtt("Trying to write %d bytes...\n%s", inl, ov::Dump(in, inl).CStr());
+		logtp("Trying to write %d bytes...\n%s", inl, ov::Dump(in, inl).CStr());
 
 		auto written_bytes = DO_CALLBACK_IF_AVAILABLE(ssize_t, -1, BIO_get_data(b), write_callback, in, static_cast<size_t>(inl));
 
-		logtd("Written: %zd/%d", written_bytes, inl);
+		logtt("Written: %zd/%d", written_bytes, inl);
 
 		if (written_bytes > 0)
 		{

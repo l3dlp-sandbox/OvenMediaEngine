@@ -41,14 +41,14 @@ namespace pvd::rtmp
 
 		  _remote(client_socket)
 	{
-		logad("Stream has been created");
+		logat("Stream has been created");
 
 		SetMediaSource(_remote->GetRemoteAddressAsUrl());
 	}
 
 	RtmpStreamV2::~RtmpStreamV2()
 	{
-		logad("Stream has been terminated finally");
+		logat("Stream has been terminated finally");
 	}
 
 	bool RtmpStreamV2::Start()
@@ -120,7 +120,7 @@ namespace pvd::rtmp
 			_remaining_data->Append(data);
 		}
 
-		logat("Trying to parse data\n%s", _remaining_data->Dump(_remaining_data->GetLength()).CStr());
+		logap("Trying to parse data\n%s", _remaining_data->Dump(_remaining_data->GetLength()).CStr());
 
 		while (true)
 		{
@@ -141,7 +141,7 @@ namespace pvd::rtmp
 				break;
 			}
 
-			logad("Could not process RTMP packet: size: %zu bytes, returns: %d",
+			logat("Could not process RTMP packet: size: %zu bytes, returns: %d",
 				  _remaining_data->GetLength(),
 				  bytes_used);
 
@@ -422,7 +422,7 @@ namespace pvd::rtmp
 				rtmp_track->FillMediaTrackMetadata(media_track);
 
 				AddTrack(media_track);
-				logad("Audio track has been created: %s", media_track->GetInfoString().CStr());
+				logat("Audio track has been created: %s", media_track->GetInfoString().CStr());
 			}
 			else if (media_type == cmn::MediaType::Video)
 			{
@@ -432,7 +432,7 @@ namespace pvd::rtmp
 				rtmp_track->FillMediaTrackMetadata(media_track);
 
 				AddTrack(media_track);
-				logad("Video track has been created: %s", media_track->GetInfoString().CStr());
+				logat("Video track has been created: %s", media_track->GetInfoString().CStr());
 			}
 		}
 
@@ -448,7 +448,7 @@ namespace pvd::rtmp
 			data_track->SetOriginBitstream(cmn::BitstreamFormat::Unknown);
 
 			AddTrack(data_track);
-			logad("Data track has been created: %s", data_track->GetInfoString().CStr());
+			logat("Data track has been created: %s", data_track->GetInfoString().CStr());
 		}
 
 		return true;

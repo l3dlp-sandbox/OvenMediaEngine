@@ -24,12 +24,12 @@ std::shared_ptr<HlsPublisher> HlsPublisher::Create(const cfg::Server &server_con
 HlsPublisher::HlsPublisher(const cfg::Server &server_config, const std::shared_ptr<MediaRouterInterface> &router)
 	: Publisher(server_config, router)
 {
-	logtd("HlsPublisher has been create");
+	logtt("HlsPublisher has been create");
 }
 
 HlsPublisher::~HlsPublisher()
 {
-	logtd("HlsPublisher has been terminated finally");
+	logtt("HlsPublisher has been terminated finally");
 }
 
 bool HlsPublisher::PrepareHttpServers(
@@ -263,7 +263,7 @@ std::shared_ptr<TsHttpInterceptor> HlsPublisher::CreateInterceptor()
 		}
 		auto requested_url = final_url;
 
-		logtd("HLSv3 requested(connection : %u): %s", connection->GetId(), request->GetUri().CStr());
+		logtt("HLSv3 requested(connection : %u): %s", connection->GetId(), request->GetUri().CStr());
 
 		auto vhost_app_name = ocst::Orchestrator::GetInstance()->ResolveApplicationNameFromDomain(final_url->Host(), final_url->App());
 
@@ -518,7 +518,7 @@ std::shared_ptr<TsHttpInterceptor> HlsPublisher::CreateInterceptor()
 				session->OnConnectionDisconnected(connection->GetId());
 				if (session->IsNoConnection())
 				{
-					logtd("ts session is closed : %u", session->GetId());
+					logtt("ts session is closed : %u", session->GetId());
 					// Remove session from stream
 					auto stream = session->GetStream();
 					if (stream != nullptr)

@@ -64,7 +64,7 @@ HlsStream::HlsStream(const std::shared_ptr<pub::Application> application, const 
 
 HlsStream::~HlsStream()
 {
-	logtd("TsStream(%s/%s) has been terminated finally", GetApplicationName(), GetName().CStr());
+	logtt("TsStream(%s/%s) has been terminated finally", GetApplicationName(), GetName().CStr());
 }
 
 std::shared_ptr<const pub::Stream::DefaultPlaylistInfo> HlsStream::GetDefaultPlaylistInfo() const
@@ -139,7 +139,7 @@ bool HlsStream::Start()
 
 bool HlsStream::Stop()
 {
-	logtd("TsStream(%s) has been stopped", GetName().CStr());
+	logtt("TsStream(%s) has been stopped", GetName().CStr());
 
 	{
 		std::lock_guard<std::shared_mutex> lock(_packetizers_guard);
@@ -249,7 +249,7 @@ void HlsStream::BufferMediaPacketUntilReadyToPlay(const std::shared_ptr<MediaPac
 
 bool HlsStream::SendBufferedPackets()
 {
-	logtd("SendBufferedPackets - BufferSize (%u)", _initial_media_packet_buffer.Size());
+	logtt("SendBufferedPackets - BufferSize (%u)", _initial_media_packet_buffer.Size());
 	while (_initial_media_packet_buffer.IsEmpty() == false)
 	{
 		auto buffered_media_packet = _initial_media_packet_buffer.Dequeue();
@@ -503,7 +503,7 @@ void HlsStream::OnSegmentCreated(const ov::String &packager_id, const std::share
 
 	playlist->OnSegmentCreated(segment);
 
-	logtd("Playlist : %s", playlist->ToString(false).CStr());
+	logtt("Playlist : %s", playlist->ToString(false).CStr());
 
 	DumpSegmentOfAllItems(packager_id, segment->GetNumber());
 }

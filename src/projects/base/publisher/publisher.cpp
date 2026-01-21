@@ -102,7 +102,7 @@ namespace pub
 		std::unique_lock<std::shared_mutex> lock(_application_map_mutex);
 		auto item = _applications.find(app_info.GetId());
 
-		logtd("Delete the application: [%s]", app_info.GetVHostAppName().CStr());
+		logtt("Delete the application: [%s]", app_info.GetVHostAppName().CStr());
 		if(item == _applications.end())
 		{
 			// Check the reason the app is not created is because it is disabled in the configuration

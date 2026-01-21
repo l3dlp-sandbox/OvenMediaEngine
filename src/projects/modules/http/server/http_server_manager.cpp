@@ -225,13 +225,13 @@ namespace http
 
 				for (const auto &address : address_list)
 				{
-					logtd("Attempting to create %s Server instance on %s...", http_server_name, address.ToString().CStr());
+					logtt("Attempting to create %s Server instance on %s...", http_server_name, address.ToString().CStr());
 
 					auto server = creation_function(address);
 
 					if (server != nullptr)
 					{
-						logtd("%s server is created on %s", http_server_name, address.ToString().CStr());
+						logtt("%s server is created on %s", http_server_name, address.ToString().CStr());
 
 						if (creation_callback != nullptr)
 						{

@@ -308,7 +308,7 @@ namespace mpegts
             SegmentBoundary boundary = _segment_boundaries.front();
             _segment_boundaries.pop();
 
-            //logd("DEBUG", "PopSamplesUntilSegmentBoundary : sample_count %u, duration_ms %u", boundary.sample_count, boundary.duration_ms);
+            //logt("DEBUG", "PopSamplesUntilSegmentBoundary : sample_count %u, duration_ms %u", boundary.sample_count, boundary.duration_ms);
 
             for (uint64_t i = 0; i < boundary.sample_count; i++)
             {

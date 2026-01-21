@@ -211,7 +211,7 @@ namespace ov
 			"C"};
 
 		constexpr const char *color_prefix[] = {
-			OV_LOG_COLOR_FG_BLUE,
+			OV_LOG_COLOR_FG_BR_BLACK,
 			OV_LOG_COLOR_FG_CYAN,
 			OV_LOG_COLOR_FG_WHITE,
 			OV_LOG_COLOR_FG_YELLOW,

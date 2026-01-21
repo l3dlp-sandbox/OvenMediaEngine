@@ -362,18 +362,18 @@ bool FilterRescaler::Configure(const std::shared_ptr<MediaTrack> &input_track, c
 		return false;
 	}
 
-	logti("Rescaler parameters. track(#%u -> #%u), module(%s:%d -> %s:%d). desc(src:%s -> output:%s), fps(%.2f -> %.2f), skipFrames(%d)",
-		  _input_track->GetId(),
-		  _output_track->GetId(),
-		  cmn::GetCodecModuleIdString(_input_track->GetCodecModuleId()),
-		  _input_track->GetCodecDeviceId(),
-		  cmn::GetCodecModuleIdString(_output_track->GetCodecModuleId()),
-		  _output_track->GetCodecDeviceId(),
-		  _src_args.CStr(),
-		  _filter_desc.CStr(),
-		  _fps_filter.GetInputFrameRate(), 
-		  _fps_filter.GetOutputFrameRate(), 
-		  _fps_filter.GetSkipFrames());
+	SetDescription(ov::String::FormatString("track(#%u -> #%u), module(%s:%d -> %s:%d), params(src:%s -> output:%s), fps(%.2f -> %.2f), skipFrames(%d)",
+				   _input_track->GetId(),
+				   _output_track->GetId(),
+				   cmn::GetCodecModuleIdString(_input_track->GetCodecModuleId()),
+				   _input_track->GetCodecDeviceId(),
+				   cmn::GetCodecModuleIdString(_output_track->GetCodecModuleId()),
+				   _output_track->GetCodecDeviceId(),
+				   _src_args.CStr(),
+				   _filter_desc.CStr(),
+				   _fps_filter.GetInputFrameRate(),
+				   _fps_filter.GetOutputFrameRate(),
+				   _fps_filter.GetSkipFrames()));
 
 	if ((::avfilter_graph_parse_ptr(_filter_graph, _filter_desc, &_inputs, &_outputs, nullptr)) < 0)
 	{

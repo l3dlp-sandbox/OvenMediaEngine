@@ -130,8 +130,17 @@ public:
 		return _input_buffer.Size();
 	}
 
-protected:
+	void SetDescription(const ov::String &description)
+	{
+		_description = description;
+	}
 
+	ov::String GetDescription() const
+	{
+		return _description;
+	}
+
+protected:
 	std::atomic<State> _state = State::CREATED;
 
 	ov::ManagedQueue<std::shared_ptr<MediaFrame>> _input_buffer;
@@ -145,6 +154,7 @@ protected:
 	ov::String 	_src_args = "";
 	
 	ov::String 	_filter_desc = "";
+	ov::String 	_description = "";
 
 	AVFilterContext *_buffersink_ctx = nullptr;
 	AVFilterContext *_buffersrc_ctx = nullptr;

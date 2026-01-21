@@ -54,6 +54,8 @@ public:
 	void SetCompleteHandler(CompleteHandler complete_handler);
 	void OnComplete(TranscodeResult result, std::shared_ptr<MediaFrame> frame);
 
+	ov::String GetDescription() const;
+	
 private:
 	bool CreateInternal();
 	bool IsNeedUpdate(std::shared_ptr<MediaFrame> buffer);
@@ -65,6 +67,7 @@ private:
 
 	std::shared_ptr<info::Stream> _input_stream_info;
 	std::shared_ptr<MediaTrack> _input_track;
+
 	std::shared_ptr<info::Stream> _output_stream_info;
 	std::shared_ptr<MediaTrack> _output_track;
 

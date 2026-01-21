@@ -163,11 +163,11 @@ bool FilterResampler::Configure(const std::shared_ptr<MediaTrack> &input_track, 
 		return false;
 	}
 
-	logti("Resampler parameters. track(#%u -> #%u). desc(src: %s -> output: %s)",
-		  _input_track->GetId(),
-		  _output_track->GetId(),
-		  _src_args.CStr(),
-		  _filter_desc.CStr());
+	SetDescription(ov::String::FormatString("track(#%u -> #%u), params(src: %s -> output: %s)",
+				   _input_track->GetId(),
+				   _output_track->GetId(),
+				   _src_args.CStr(),
+				   _filter_desc.CStr()));
 
 	if (::avfilter_graph_parse_ptr(_filter_graph, _filter_desc, &_inputs, &_outputs, nullptr) < 0)
 	{

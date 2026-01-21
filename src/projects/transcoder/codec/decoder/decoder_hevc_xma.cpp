@@ -278,8 +278,7 @@ void DecoderHEVCxXMA::CodecThread()
 				{
 					auto codec_info = ffmpeg::compat::CodecInfoToString(_codec_context);
 
-					logti("[%s/%s(%u)] Changed format. %s",
-						  _stream_info.GetApplicationInfo().GetVHostAppName().CStr(), _stream_info.GetName().CStr(), _stream_info.GetId(), codec_info.CStr());
+					logtd("[%s(%u)] Changed format. %s", _stream_info.GetUri().CStr(), _stream_info.GetId(), codec_info.CStr());
 				}
 
 				// If there is no duration, the duration is calculated by framerate and timebase.

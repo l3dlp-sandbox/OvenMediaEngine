@@ -40,7 +40,7 @@ std::shared_ptr<TranscoderStream> TranscoderStream::Create(const info::Applicati
 TranscoderStream::TranscoderStream(const info::Application &application_info, const std::shared_ptr<info::Stream> &stream, TranscodeApplication *parent)
 	: _parent(parent), _application_info(application_info), _input_stream(stream)
 {
-	_log_prefix = ov::String::FormatString("[%s]", _input_stream->GetUri().CStr());
+	_log_prefix = ov::String::FormatString("[%s(%u)]", _input_stream->GetUri().CStr(), _input_stream->GetId());
 
 	// default output profiles configuration
 	_output_profiles_cfg = &(_application_info.GetConfig().GetOutputProfiles());
@@ -105,14 +105,14 @@ bool TranscoderStream::Prepare(const std::shared_ptr<info::Stream> &stream)
 		return false;
 	}
 
-	logti("%s stream preparation started asynchronously", _log_prefix.CStr());
+	logtd("%s stream preparation started asynchronously", _log_prefix.CStr());
 
 	return true;
 }
 
 void TranscoderStream::PrepareAsync()
 {
-	logti("%s Async preparation started", _log_prefix.CStr());
+	logtd("%s Async preparation started", _log_prefix.CStr());
 
 	// Transcoder Webhook
 	_output_profiles_cfg = RequestWebhook();
@@ -763,7 +763,7 @@ std::shared_ptr<info::Stream> TranscoderStream::CreateOutputStream(const cfg::vh
 					auto output_track = CreateOutputTrack(input_track, profile);
 					if (output_track == nullptr)
 					{
-						logte("Failed to create video track. Encoding options need to be checked. InputTrack(%d)", input_track_id);
+						logte("[%s] Failed to create video track. Encoding options need to be checked. InputTrack(%d)", _log_prefix.CStr(), input_track_id);
 					
 						return nullptr;
 					}
@@ -779,7 +779,7 @@ std::shared_ptr<info::Stream> TranscoderStream::CreateOutputStream(const cfg::vh
 					auto output_track = CreateOutputTrack(input_track, profile);
 					if (output_track == nullptr)
 					{
-						logte("Failed to create image track. Encoding options need to be checked. InputTrack(%d)", input_track_id);
+						logte("[%s] Failed to create image track. Encoding options need to be checked. InputTrack(%d)", _log_prefix.CStr(), input_track_id);
 					
 						return nullptr;
 					}
@@ -797,7 +797,7 @@ std::shared_ptr<info::Stream> TranscoderStream::CreateOutputStream(const cfg::vh
 					auto output_track = CreateOutputTrack(input_track, profile);
 					if (output_track == nullptr)
 					{
-						logte("Failed to create audio track. Encoding options need to be checked. InputTrack(%d)", input_track_id);
+						logte("[%s] Failed to create audio track. Encoding options need to be checked. InputTrack(%d)", _log_prefix.CStr(), input_track_id);
 
 						return nullptr;
 					}
@@ -819,7 +819,7 @@ std::shared_ptr<info::Stream> TranscoderStream::CreateOutputStream(const cfg::vh
 					auto output_track = CreateOutputTrack(input_track, profile);
 					if (output_track == nullptr)
 					{
-						logte("Failed to create data track for transcription. Encoding options need to be checked. InputTrack(%d), SpeechToTextProfile(%s)", input_track_id, profile.GetName().CStr());
+						logte("[%s] Failed to create data track for transcription. Encoding options need to be checked. InputTrack(%d), SpeechToTextProfile(%s)", _log_prefix.CStr(), input_track_id, profile.GetName().CStr());
 						
 						return nullptr;
 					}
@@ -843,7 +843,7 @@ std::shared_ptr<info::Stream> TranscoderStream::CreateOutputStream(const cfg::vh
 					auto output_track = CreateOutputTrackDataType(input_track);
 					if (output_track == nullptr)
 					{
-						logte("Failed to create data track. Encoding options need to be checked. InputTrack(%d)", input_track_id);
+						logte("[%s] Failed to create data track. Encoding options need to be checked. InputTrack(%d)", _log_prefix.CStr(), input_track_id);
 						
 						return nullptr;
 					}
@@ -854,7 +854,7 @@ std::shared_ptr<info::Stream> TranscoderStream::CreateOutputStream(const cfg::vh
 			}
 			break;
 			default: {
-				logte("Unsupported media type of input track. type(%d)", input_track->GetMediaType());
+				logte("[%s] Unsupported media type of input track. type(%d)", _log_prefix.CStr(), input_track->GetMediaType());
 				continue;
 			}
 		}
@@ -912,7 +912,7 @@ std::shared_ptr<info::Stream> TranscoderStream::CreateOutputStream(const cfg::vh
 
 				if (matched_video_tracks.empty() && matched_audio_tracks.empty())
 				{
-					logtw("No matched tracks for the rendition template (%s).", rendition_template.GetName().CStr());
+					logtw("[%s] No matched tracks for the rendition template (%s).", _log_prefix.CStr(), rendition_template.GetName().CStr());
 					continue;
 				}
 
@@ -931,7 +931,7 @@ std::shared_ptr<info::Stream> TranscoderStream::CreateOutputStream(const cfg::vh
 
 							playlist_info->AddRendition(rendition);
 
-							logti("Rendition(%s) has been created from template in Playlist(%s) : video(%s/%d), audio(%s%d)", rendition_name.CStr(), playlist_info->GetName().CStr(), video_track->GetPublicName().CStr(), video_track->GetGroupIndex(), audio_track->GetPublicName().CStr(), audio_track->GetGroupIndex());
+							logtd("[%s] Rendition(%s) has been created from template in Playlist(%s) : video(%s/%d), audio(%s%d)", _log_prefix.CStr(), rendition_name.CStr(), playlist_info->GetName().CStr(), video_track->GetPublicName().CStr(), video_track->GetGroupIndex(), audio_track->GetPublicName().CStr(), audio_track->GetGroupIndex());
 						}
 					}
 				}
@@ -946,7 +946,7 @@ std::shared_ptr<info::Stream> TranscoderStream::CreateOutputStream(const cfg::vh
 
 						playlist_info->AddRendition(rendition);
 
-						logti("Rendition(%s) has been created from template in Playlist(%s) : video(%s/%d)", rendition_name.CStr(), playlist_info->GetName().CStr(), video_track->GetPublicName().CStr(), video_track->GetGroupIndex());
+						logtd("[%s] Rendition(%s) has been created from template in Playlist(%s) : video(%s/%d)", _log_prefix.CStr(), rendition_name.CStr(), playlist_info->GetName().CStr(), video_track->GetPublicName().CStr(), video_track->GetGroupIndex());
 					}
 				}
 				else if (matched_audio_tracks.empty() == false)
@@ -961,13 +961,13 @@ std::shared_ptr<info::Stream> TranscoderStream::CreateOutputStream(const cfg::vh
 
 						playlist_info->AddRendition(rendition);
 
-						logti("Rendition(%s) has been created from template in Playlist(%s) : audio(%s/%d)", rendition_name.CStr(), playlist_info->GetName().CStr(), audio_track->GetPublicName().CStr(), audio_track->GetGroupIndex());
+						logtd("[%s] Rendition(%s) has been created from template in Playlist(%s) : audio(%s/%d)", _log_prefix.CStr(), rendition_name.CStr(), playlist_info->GetName().CStr(), audio_track->GetPublicName().CStr(), audio_track->GetGroupIndex());
 					}
 				}
 			}
 
-			logti("Playlist(%s) has been created", playlist_info->GetName().CStr());
-			logti("%s", playlist_info->ToString().CStr());
+			logtd("[%s] Playlist(%s) has been created", _log_prefix.CStr(), playlist_info->GetName().CStr());
+			logti("[%s] %s", _log_prefix.CStr(), playlist_info->ToString().CStr());
 
 			output_stream->AddPlaylist(playlist_info);
 		}
@@ -1180,7 +1180,7 @@ bool TranscoderStream::CreateDecoders()
 			return false;
 		}
 
-		logti("%s Decoder has been created. InputTrack(%d, Decoder(%d) [Codec(%s), Module(%s), Device(%u)]",
+		logti("%s Decoder has been created. InputTrack(%d), Decoder(%d) [Codec(%s), Module(%s), Device(%u)]",
 			  _log_prefix.CStr(), input_track->GetId(), decoder_id, cmn::GetCodecIdString(input_track->GetCodecId()),
 			  cmn::GetCodecModuleIdString(input_track->GetCodecModuleId()), input_track->GetCodecDeviceId());
 	}
@@ -1304,7 +1304,8 @@ bool TranscoderStream::CreateEncoders(std::shared_ptr<MediaFrame> buffer)
 				return false;
 			}
 
-			logti("%s Encoder has been created. Encoder(%d) OutputTrack(%d) <Codec:%s,Module:%s:%d>", _log_prefix.CStr(),
+			// TODO(Keukhan): Add encoding option logs
+			logti("%s Encoder has been created. Encoder(%d) OutputTrack(%d) <Codec:%s,Module:%s:%d> TODO: <Encoding Option>", _log_prefix.CStr(),
 				  encoder_id, output_track->GetId(), cmn::GetCodecIdString(output_track->GetCodecId()), cmn::GetCodecModuleIdString(output_track->GetCodecModuleId()), output_track->GetCodecDeviceId());
 		}
 	}
@@ -1387,8 +1388,6 @@ bool TranscoderStream::CreateEncoder(MediaTrackId encoder_id, std::shared_ptr<in
 
 	SetEncoderWithFilter(encoder_id, post_filter, encoder);
 
-	logtt("%s Created encoder. Encoder(%d) -> OutputTrack(%d)", _log_prefix.CStr(), encoder_id, output_track->GetId());
-
 	return true;
 }
 
@@ -1434,7 +1433,6 @@ void TranscoderStream::SetEncoderWithFilter(MediaTrackId encoder_id, std::shared
 
 bool TranscoderStream::CreateFilters(std::shared_ptr<MediaFrame> buffer)
 {
-
 	MediaTrackId decoder_id = buffer->GetTrackId();
 
 	// 1. Get Decoder -> Filter List
@@ -1499,11 +1497,11 @@ bool TranscoderStream::CreateFilters(std::shared_ptr<MediaFrame> buffer)
 #endif
 			return false;
 		}
-		else {
-			logti("%s Filter has been created. Filter(%d), Decoder(%d) <Codec:%s, Module:%s:%d>, Encoder(%d) <Codec:%s, Module:%s:%d>", _log_prefix.CStr(), filter_id,
-				  decoder_id, cmn::GetCodecIdString(output_track->GetCodecId()), cmn::GetCodecModuleIdString(output_track->GetCodecModuleId()), output_track->GetCodecDeviceId(),
-				  encoder_id, cmn::GetCodecIdString(output_track->GetCodecId()), cmn::GetCodecModuleIdString(output_track->GetCodecModuleId()), output_track->GetCodecDeviceId());
-		}
+
+		logti("%s Filter has been created. Filter(%d), Decoder(%d) <Codec:%s, Module:%s:%d>, Encoder(%d) <Codec:%s, Module:%s:%d>, %s", _log_prefix.CStr(), filter_id,
+			  decoder_id, cmn::GetCodecIdString(output_track->GetCodecId()), cmn::GetCodecModuleIdString(output_track->GetCodecModuleId()), output_track->GetCodecDeviceId(),
+			  encoder_id, cmn::GetCodecIdString(output_track->GetCodecId()), cmn::GetCodecModuleIdString(output_track->GetCodecModuleId()), output_track->GetCodecDeviceId(),
+			  GetFilter(filter_id)->GetDescription().CStr());
 	}
 
 	return true;
@@ -2299,7 +2297,7 @@ void TranscoderStream::SpreadToFilters(MediaTrackId decoder_id, std::shared_ptr<
 
 	for (auto &filter_id : filter_ids)
 	{
-		auto frame_clone = frame->CloneFrame(true);
+		auto frame_clone = frame->CloneFrame();
 		if (frame_clone == nullptr)
 		{
 			logte("%s Failed to clone frame", _log_prefix.CStr());

@@ -282,3 +282,13 @@ std::shared_ptr<MediaTrack>& TranscodeFilter::GetOutputTrack()
 {
 	return _output_track;
 }
+
+ov::String TranscodeFilter::GetDescription() const
+{
+	if(_internal == nullptr)
+	{
+		return "Null";
+	}
+
+	return _internal->GetDescription();
+}

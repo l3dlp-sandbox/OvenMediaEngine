@@ -55,7 +55,7 @@ bool TranscodeGPU::Initialize()
 	}
 	else
 	{
-		logtw("No supported NVIDIA accelerator");
+		logtd("No supported NVIDIA accelerator");
 	}
 
 	// XMA
@@ -65,7 +65,7 @@ bool TranscodeGPU::Initialize()
 	}
 	else
 	{
-		logtw("No supported Xilinx Media accelerator");
+		logtd("No supported Xilinx Media accelerator");
 	}
 
 	// QSV
@@ -75,7 +75,7 @@ bool TranscodeGPU::Initialize()
 	}
 	else
 	{
-		logtw("No supported Intel QuickSync accelerator");
+		logtd("No supported Intel QuickSync accelerator");
 	}
 
 	// NILOGAN
@@ -85,7 +85,7 @@ bool TranscodeGPU::Initialize()
 	}
 	else
 	{
-		logtw("No supported Netint VPU accelerator");
+		logtd("No supported Netint VPU accelerator");
 	}
 
 	_initialized = true;
@@ -95,6 +95,11 @@ bool TranscodeGPU::Initialize()
 
 bool TranscodeGPU::Uninitialize()
 {
+	if (!_initialized)
+	{
+		return true;
+	}
+
 	logti("Trying to release Transcoder GPU resources");
 
 	for (int i = 0; i < MAX_DEVICE_COUNT; i++)

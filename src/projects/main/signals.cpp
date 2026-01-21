@@ -20,6 +20,7 @@
 #include <iostream>
 
 #include "./main_private.h"
+#include "./third_parties.h"
 #include "main.h"
 
 bool g_is_terminated;
@@ -294,6 +295,47 @@ static bool InitializeForSigUsr1()
 	return (::sigaction(SIGUSR1, &sa, nullptr) == 0);
 }
 
+// Configure for SIGRT* to use jemalloc
+
+#ifdef OME_USE_JEMALLOC
+// SIGRTMIN+0: Show jemalloc stats
+static auto SIG_JEMALLOC_SHOW_STATS	  = (SIGRTMIN + 0);
+// SIGRTMIN+1: Trigger dump (This only works when `OME_USE_JEMALLOC_PROFILE` is defined)
+static auto SIG_JEMALLOC_TRIGGER_DUMP = (SIGRTMIN + 1);
+
+static void SigRtHandler(int signum, siginfo_t *si, void *unused)
+{
+	if (signum == (SIG_JEMALLOC_SHOW_STATS))
+	{
+		logtc("Jemalloc stats signal received.");
+		JemallocShowStats();
+	}
+	else if (signum == (SIG_JEMALLOC_TRIGGER_DUMP))
+	{
+		logtc("Jemalloc dump trigger signal received.");
+		JemallocTriggerDump();
+	}
+}
+#endif	// OME_USE_JEMALLOC
+
+static bool InitializeForSigRt()
+{
+#ifdef OME_USE_JEMALLOC
+	if (SIG_JEMALLOC_TRIGGER_DUMP >= SIGRTMAX)
+	{
+		logtc("Cannot initialize SIGRT handler for jemalloc: `SIGRTMAX` is too small.");
+		return false;
+	}
+
+	auto sa = ::GetSigAction(::SigRtHandler);
+
+	return (::sigaction(SIG_JEMALLOC_SHOW_STATS, &sa, nullptr) == 0) &&
+		   (::sigaction(SIG_JEMALLOC_TRIGGER_DUMP, &sa, nullptr) == 0);
+#else	// OME_USE_JEMALLOC
+	return true;
+#endif	// OME_USE_JEMALLOC
+}
+
 // Configure for SIGHUP
 static void SigHupHandler(int signum, siginfo_t *si, void *unused)
 {
@@ -402,6 +444,7 @@ bool InitializeSignals()
 
 	return InitializeForAbortSignals() &&
 		   InitializeForSigUsr1() &&
+		   InitializeForSigRt() &&
 		   InitializeForSigHup() &&
 		   InitializeForSigTerm() &&
 		   InitializeForSigInt();

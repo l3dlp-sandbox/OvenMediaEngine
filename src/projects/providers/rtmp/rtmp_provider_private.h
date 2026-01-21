@@ -18,6 +18,7 @@
 
 #define logap(format, ...) logtp(RTMP_STREAM_FORMAT_PREFIX format, RTMP_STREAM_DESC, ##__VA_ARGS__)
 #define logat(format, ...) logtt(RTMP_STREAM_FORMAT_PREFIX format, RTMP_STREAM_DESC, ##__VA_ARGS__)
+#define logad(format, ...) logtd(RTMP_STREAM_FORMAT_PREFIX format, RTMP_STREAM_DESC, ##__VA_ARGS__)
 #define logai(format, ...) logti(RTMP_STREAM_FORMAT_PREFIX format, RTMP_STREAM_DESC, ##__VA_ARGS__)
 #define logaw(format, ...) logtw(RTMP_STREAM_FORMAT_PREFIX format, RTMP_STREAM_DESC, ##__VA_ARGS__)
 #define logae(format, ...) logte(RTMP_STREAM_FORMAT_PREFIX format, RTMP_STREAM_DESC, ##__VA_ARGS__)

@@ -86,7 +86,7 @@ namespace ov
 		int EpollWait(int timeout_msec = Infinite);
 		bool DeleteFromEpoll(const std::shared_ptr<Socket> &socket);
 
-		void ConvertSrtEventToEpollEvent(const SRT_EPOLL_EVENT &srt_event, epoll_event *event);
+		bool ConvertSrtEventToEpollEvent(const SRT_EPOLL_EVENT &srt_event, epoll_event *event);
 
 		void AddToConnectionTimedOutQueue(const std::shared_ptr<Socket> &socket);
 		void EnqueueToDispatchLater(const std::shared_ptr<Socket> &socket);

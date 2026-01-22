@@ -633,9 +633,20 @@ namespace ov
 					MergeSocketList();
 
 					// Make a list of epoll_event from SRT_EPOLL_EVENTs
-					for (int index = 0; index < event_count; index++)
 					{
-						ConvertSrtEventToEpollEvent(_srt_epoll_events[index], &(_epoll_events[index]));
+						std::lock_guard lock_guard(_socket_map_mutex);
+
+						int epoll_event_count = 0;
+
+						for (int index = 0; index < event_count; index++)
+						{
+							if (ConvertSrtEventToEpollEvent(_srt_epoll_events[index], &(_epoll_events[epoll_event_count])))
+							{
+								epoll_event_count++;
+							}
+						}
+
+						event_count = epoll_event_count;
 					}
 				}
 				else
@@ -664,9 +675,17 @@ namespace ov
 		return _last_epoll_event_count;
 	}
 
-	void SocketPoolWorker::ConvertSrtEventToEpollEvent(const SRT_EPOLL_EVENT &srt_event, epoll_event *event)
+	bool SocketPoolWorker::ConvertSrtEventToEpollEvent(const SRT_EPOLL_EVENT &srt_event, epoll_event *event)
 	{
-		SRTSOCKET srt_socket  = srt_event.fd;
+		SRTSOCKET srt_socket = srt_event.fd;
+
+		auto socket_iterator = _socket_map.find(srt_socket);
+		if (socket_iterator == _socket_map.end())
+		{
+			// In case it is deleted from socket_map just after `srt_epoll_uwait()`
+			return false;
+		}
+
 		SRT_SOCKSTATUS status = ::srt_getsockstate(srt_socket);
 
 		event->data.ptr		  = _socket_map[srt_socket].get();
@@ -713,6 +732,8 @@ namespace ov
 				logat("Not handled SRT status %d for socket #%d", status, srt_socket);
 				break;
 		}
+
+		return true;
 	}
 
 	void SocketPoolWorker::EnqueueToDispatchLater(const std::shared_ptr<Socket> &socket)

@@ -365,8 +365,16 @@ namespace third_party::internal
 
 						if (_is_running.load())
 						{
-							::mallctl("prof.dump", nullptr, nullptr, nullptr, 0);
-							::mallctl("prof.reset", nullptr, nullptr, nullptr, 0);
+							int result = ::mallctl("prof.dump", nullptr, nullptr, nullptr, 0);
+
+							if (result == 0)
+							{
+								logi(JEMALLOC_LOG_TAG, "Jemalloc profile dumped successfully.");
+							}
+							else
+							{
+								loge(JEMALLOC_LOG_TAG, "Could not dump jemalloc profile (err: %d)", result);
+							}
 						}
 					}
 				}

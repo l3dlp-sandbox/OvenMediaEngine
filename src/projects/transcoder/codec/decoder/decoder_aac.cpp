@@ -136,7 +136,7 @@ void DecoderAAC::CodecThread()
 					}
 					else if (ret == AVERROR_INVALIDDATA)
 					{
-						logtw("[%s] Invalid data while sending a packet for decoding. track(%u), pts(%lld)",
+						logtd("[%s] Invalid data while sending a packet for decoding. track(%u), pts(%lld)",
 							  _stream_info.GetUri().CStr(), GetRefTrack()->GetId(), _pkt->pts);
 					}
 					else if (ret < 0)

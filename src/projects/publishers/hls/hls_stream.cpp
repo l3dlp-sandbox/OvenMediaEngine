@@ -89,6 +89,32 @@ ov::String HlsStream::GetStreamId() const
 	return ov::String::FormatString("hlsv3/%s", GetUri().CStr());
 }
 
+std::shared_ptr<HlsSession> HlsStream::GetSessionFromPool()
+{
+	// Max session pool size if _worker_count
+	size_t max_pool_size = _worker_count;
+	
+	// Get random index
+	size_t index = ov::Random::GenerateUInt32() % max_pool_size;
+
+	auto session = GetSession(static_cast<session_id_t>(index));
+	if (session == nullptr)
+	{
+		// create
+		session = HlsSession::Create(static_cast<session_id_t>(index),
+										true,
+										"",
+										GetApplication(),
+										pub::Stream::GetSharedPtr(),
+										0);
+		logtd("HlsStream(%s/%s) - Created origin mode session from pool, session id: %zu", GetApplication()->GetVHostAppName().CStr(), GetName().CStr(), index);
+		AddSession(session);
+	}
+
+	return std::static_pointer_cast<HlsSession>(session);
+}
+
+
 bool HlsStream::Start()
 {
 	if (GetState() != State::CREATED)

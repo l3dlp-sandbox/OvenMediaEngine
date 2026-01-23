@@ -23,6 +23,7 @@
 // max initial media packet buffer size, for OOM protection
 #define MAX_INITIAL_MEDIA_PACKET_BUFFER_SIZE		10000
 
+class LLHlsSession;
 class LLHlsStream final : public pub::Stream, public bmff::FMp4StorageObserver
 {
 public:
@@ -92,6 +93,9 @@ public:
 	// Check marker can be inserted
 	//////////////////////////
 	std::tuple<bool, ov::String> CanInsertMarker(cmn::BitstreamFormat bitstream_format, int64_t timestamp_ms, const std::shared_ptr<ov::Data> &data) const;
+
+	/// Origin Mode Session Management
+	std::shared_ptr<LLHlsSession> GetSessionFromPool();
 
 private:
 	bool Start() override;

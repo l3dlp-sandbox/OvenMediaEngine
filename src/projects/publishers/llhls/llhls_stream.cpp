@@ -44,6 +44,31 @@ ov::String LLHlsStream::GetStreamId() const
 	return ov::String::FormatString("llhls/%s", GetUri().CStr());
 }
 
+std::shared_ptr<LLHlsSession> LLHlsStream::GetSessionFromPool()
+{
+	// Max session pool size if _worker_count
+	size_t max_pool_size = _worker_count;
+	
+	// Get random index
+	size_t index = ov::Random::GenerateUInt32() % max_pool_size;
+
+	auto session = GetSession(static_cast<session_id_t>(index));
+	if (session == nullptr)
+	{
+		// create
+		session = LLHlsSession::Create(static_cast<session_id_t>(index),
+										_origin_mode,
+										"",
+										GetApplication(),
+										pub::Stream::GetSharedPtr(),
+										0);
+		logtd("LLHlsStream(%s/%s) - Created origin mode session from pool, session id: %zu", GetApplication()->GetVHostAppName().CStr(), GetName().CStr(), index);
+		AddSession(session);
+	}
+
+	return std::static_pointer_cast<LLHlsSession>(session);
+}
+
 std::shared_ptr<const pub::Stream::DefaultPlaylistInfo> LLHlsStream::GetDefaultPlaylistInfo() const
 {
 	static auto info = []() -> std::shared_ptr<const pub::Stream::DefaultPlaylistInfo> {

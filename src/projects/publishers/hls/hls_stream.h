@@ -27,6 +27,7 @@
 // max initial media packet buffer size, for OOM protection
 #define MAX_INITIAL_MEDIA_PACKET_BUFFER_SIZE 10000
 
+class HlsSession;
 class HlsStream final : public pub::Stream, public mpegts::PackagerSink
 {
 public:
@@ -65,6 +66,9 @@ public:
 	std::tuple<RequestResult, std::shared_ptr<const ov::Data>> GetSegmentData(const ov::String &variant_name, uint32_t number);
 
 	ov::String GetStreamId() const;
+
+	/// Origin Mode Session Management
+	std::shared_ptr<HlsSession> GetSessionFromPool();
 
 private:
 	bool Start() override;

@@ -505,10 +505,10 @@ namespace pvd::rtmp
 		return SendMessage(chunk_write_info);
 	}
 
-	bool RtmpChunkHandler::SendAmfConnectSuccess(uint32_t chunk_stream_id, double transaction_id, double object_encoding)
+	bool RtmpChunkHandler::SendAmfConnectSuccess(double transaction_id, double object_encoding)
 	{
 		return SendAmfCommand(
-			modules::rtmp::ChunkWriteInfo::Create(chunk_stream_id),
+			modules::rtmp::ChunkWriteInfo::Create(modules::rtmp::ChunkStreamId::Control),
 			modules::rtmp::AmfDocumentBuilder()
 				// _result
 				.Append(modules::rtmp::EnumToString(modules::rtmp::Command::AckResult))
@@ -549,10 +549,10 @@ namespace pvd::rtmp
 				.Build());
 	}
 
-	bool RtmpChunkHandler::SendAmfOnFCPublish(uint32_t chunk_stream_id, uint32_t stream_id, double client_id)
+	bool RtmpChunkHandler::SendAmfOnFCPublish(double client_id)
 	{
 		return SendAmfCommand(
-			modules::rtmp::ChunkWriteInfo::Create(chunk_stream_id, _stream->_rtmp_stream_id),
+			modules::rtmp::ChunkWriteInfo::Create(modules::rtmp::ChunkStreamId::Control),
 			modules::rtmp::AmfDocumentBuilder()
 				.Append(modules::rtmp::EnumToString(modules::rtmp::Command::OnFCPublish))
 				.Append(0.0)
@@ -661,10 +661,9 @@ namespace pvd::rtmp
 			return false;
 		}
 
-		if (SendAmfConnectSuccess(header->basic_header.chunk_stream_id, transaction_id, object_encoding) == false)
+		if (SendAmfConnectSuccess(transaction_id, object_encoding) == false)
 		{
-			logae("Failed to send AmfConnectResult(%u, %.2f, %.2f)",
-				  header->basic_header.chunk_stream_id,
+			logae("Failed to send AmfConnectResult(%.2f, %.2f)",
 				  transaction_id,
 				  object_encoding);
 
@@ -792,11 +791,10 @@ namespace pvd::rtmp
 			}
 
 			// TODO: check if the chunk stream id is already exist, and generates new rtmp_stream_id and client_id.
-			if (SendAmfOnFCPublish(header->basic_header.chunk_stream_id, _stream->_rtmp_stream_id, _stream->GetChannelId()) == false)
+			if (SendAmfOnFCPublish(_stream->GetChannelId()) == false)
 			{
-				logae("OnAmfFCPublish - Failed to send AmfOnFCPublish(%u, %u)",
-					  header->basic_header.chunk_stream_id,
-					  _stream->_rtmp_stream_id);
+				logae("OnAmfFCPublish - Failed to send AmfOnFCPublish(%u)",
+					  _stream->GetChannelId());
 
 				return false;
 			}
@@ -1437,8 +1435,8 @@ namespace pvd::rtmp
 
 				if ((packet_type == cmn::PacketType::NALU) || (packet_type == cmn::PacketType::RAW))
 				{
-					auto pts		  = media_packet->GetPts();
-					auto dts		  = media_packet->GetDts();
+					auto pts = media_packet->GetPts();
+					auto dts = media_packet->GetDts();
 
 					_stream->AdjustTimestamp(track_id, pts, dts);
 

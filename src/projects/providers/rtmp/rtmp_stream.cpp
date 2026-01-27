@@ -369,7 +369,13 @@ namespace pvd
 			return false;
 		}
 
-		if (SendAmfConnectResult(header->basic_header.chunk_stream_id, transaction_id, object_encoding) == false)
+		if (SendSetChunkSize(RTMP_DEFAULT_CHUNK_SIZE) == false)
+		{
+			logte("SendSetChunkSize Fail");
+			return false;
+		}
+
+		if (SendAmfConnectResult(transaction_id, object_encoding) == false)
 		{
 			logte("SendAmfConnectResult Fail");
 			return false;
@@ -504,7 +510,7 @@ namespace pvd
 			}
 
 			// TODO: check if the chunk stream id is already exist, and generates new rtmp_stream_id and client_id.
-			if (SendAmfOnFCPublish(header->basic_header.chunk_stream_id, _rtmp_stream_id, _client_id) == false)
+			if (SendAmfOnFCPublish(_client_id) == false)
 			{
 				logte("SendAmfOnFCPublish Fail");
 				return false;
@@ -2147,7 +2153,7 @@ namespace pvd
 	{
 		auto body = std::make_shared<std::vector<uint8_t>>(sizeof(int));
 		auto message_header = RtmpMuxMessageHeader::Create(
-			RtmpChunkStreamId::Urgent, RtmpMessageTypeID::WindowAcknowledgementSize, _rtmp_stream_id, body->size());
+			RtmpChunkStreamId::Urgent, RtmpMessageTypeID::WindowAcknowledgementSize, 0, body->size());
 
 		RtmpMuxUtil::WriteInt32(body->data(), size);
 
@@ -2169,7 +2175,7 @@ namespace pvd
 	{
 		auto body = std::make_shared<std::vector<uint8_t>>(5);
 		auto message_header = RtmpMuxMessageHeader::Create(
-			RtmpChunkStreamId::Urgent, RtmpMessageTypeID::SetPeerBandwidth, _rtmp_stream_id, body->size());
+			RtmpChunkStreamId::Urgent, RtmpMessageTypeID::SetPeerBandwidth, 0, body->size());
 
 		RtmpMuxUtil::WriteInt32(body->data(), bandwidth);
 		RtmpMuxUtil::WriteInt8(body->data() + 4, 2);
@@ -2194,6 +2200,17 @@ namespace pvd
 
 		return SendUserControlMessage(UserControlMessageId::StreamEof, body);
 	}
+	
+	bool RtmpStream::SendSetChunkSize(uint32_t chunk_size)
+	{
+		auto body			= std::make_shared<std::vector<uint8_t>>(sizeof(int));
+		auto message_header = RtmpMuxMessageHeader::Create(
+			RtmpChunkStreamId::Urgent, RtmpMessageTypeID::SetChunkSize, 0, body->size());
+
+		RtmpMuxUtil::WriteInt32(body->data(), chunk_size);
+
+		return SendMessagePacket(message_header, body);
+	}
 
 	bool RtmpStream::SendAmfCommand(std::shared_ptr<RtmpMuxMessageHeader> &message_header, AmfDocument &document)
 	{
@@ -2214,9 +2231,9 @@ namespace pvd
 		return SendMessagePacket(message_header, data);
 	}
 
-	bool RtmpStream::SendAmfConnectResult(uint32_t chunk_stream_id, double transaction_id, double object_encoding)
+	bool RtmpStream::SendAmfConnectResult(double transaction_id, double object_encoding)
 	{
-		auto message_header = RtmpMuxMessageHeader::Create(chunk_stream_id);
+		auto message_header = RtmpMuxMessageHeader::Create(RtmpChunkStreamId::Control);
 
 		AmfDocument document;
 
@@ -2252,10 +2269,9 @@ namespace pvd
 		return SendAmfCommand(message_header, document);
 	}
 
-	bool RtmpStream::SendAmfOnFCPublish(uint32_t chunk_stream_id, uint32_t stream_id, double client_id)
+	bool RtmpStream::SendAmfOnFCPublish(double client_id)
 	{
-		auto message_header = RtmpMuxMessageHeader::Create(
-			chunk_stream_id, RtmpMessageTypeID::Amf0Command, _rtmp_stream_id);
+		auto message_header = RtmpMuxMessageHeader::Create(RtmpChunkStreamId::Control, RtmpMessageTypeID::Amf0Command, 0);
 
 		AmfDocument document;
 

@@ -29,9 +29,10 @@ class LLHlsStream final : public pub::Stream, public bmff::FMp4StorageObserver
 public:
 	static std::shared_ptr<LLHlsStream> Create(const std::shared_ptr<pub::Application> application, 
 												const info::Stream &info,
+												bool origin_mode,
 												uint32_t worker_count);
 
-	explicit LLHlsStream(const std::shared_ptr<pub::Application> application, const info::Stream &info, uint32_t worker_count);
+	explicit LLHlsStream(const std::shared_ptr<pub::Application> application, const info::Stream &info, bool origin_mode, uint32_t worker_count);
 	~LLHlsStream() final;
 
 	ov::String GetStreamId() const;

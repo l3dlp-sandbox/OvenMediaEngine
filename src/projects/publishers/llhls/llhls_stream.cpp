@@ -23,14 +23,14 @@
 #include "llhls_private.h"
 #include "llhls_session.h"
 
-std::shared_ptr<LLHlsStream> LLHlsStream::Create(const std::shared_ptr<pub::Application> application, const info::Stream &info, uint32_t worker_count)
+std::shared_ptr<LLHlsStream> LLHlsStream::Create(const std::shared_ptr<pub::Application> application, const info::Stream &info, bool origin_mode, uint32_t worker_count)
 {
-	auto stream = std::make_shared<LLHlsStream>(application, info, worker_count);
+	auto stream = std::make_shared<LLHlsStream>(application, info, origin_mode, worker_count);
 	return stream;
 }
 
-LLHlsStream::LLHlsStream(const std::shared_ptr<pub::Application> application, const info::Stream &info, uint32_t worker_count)
-	: Stream(application, info), _worker_count(worker_count)
+LLHlsStream::LLHlsStream(const std::shared_ptr<pub::Application> application, const info::Stream &info, bool origin_mode, uint32_t worker_count)
+	: Stream(application, info), _origin_mode(origin_mode), _worker_count(worker_count)
 {
 }
 

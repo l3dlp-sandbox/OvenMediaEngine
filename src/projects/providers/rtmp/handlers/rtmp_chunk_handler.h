@@ -112,6 +112,7 @@ namespace pvd::rtmp
 		bool SendSetPeerBandwidth(uint32_t bandwidth);
 		bool SendStreamBegin(uint32_t stream_id);
 		bool SendStreamEnd();
+		bool SendSetChunkSize(uint32_t chunk_size);
 		bool SendAmfConnectSuccess(double transaction_id, double object_encoding);
 		bool SendAmfAckResult(uint32_t chunk_stream_id, double transaction_id);
 		bool SendAmfOnFCPublish(double client_id);

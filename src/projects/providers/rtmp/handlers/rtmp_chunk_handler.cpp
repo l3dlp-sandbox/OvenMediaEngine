@@ -505,6 +505,19 @@ namespace pvd::rtmp
 		return SendMessage(chunk_write_info);
 	}
 
+	bool RtmpChunkHandler::SendSetChunkSize(uint32_t chunk_size)
+	{
+		auto chunk_write_info = modules::rtmp::ChunkWriteInfo::Create(
+			modules::rtmp::ChunkStreamId::Urgent,
+			modules::rtmp::MessageTypeID::SetChunkSize,
+			0,
+			sizeof(uint32_t));
+
+		chunk_write_info->AppendPayload(ov::HostToBE32(chunk_size));
+
+		return SendMessage(chunk_write_info);
+	}
+
 	bool RtmpChunkHandler::SendAmfConnectSuccess(double transaction_id, double object_encoding)
 	{
 		return SendAmfCommand(
@@ -658,6 +671,12 @@ namespace pvd::rtmp
 		if (SendStreamBegin(0) == false)
 		{
 			logae("Failed to send StreamBegin(0)");
+			return false;
+		}
+
+		if (SendSetChunkSize(DEFAULT_CHUNK_SIZE) == false)
+		{
+			logte("Failed to send SetChunkSize(%u)", DEFAULT_CHUNK_SIZE);
 			return false;
 		}
 

@@ -440,6 +440,7 @@ namespace info
 		info.AppendFormat(" interval(%d)", _interval);
 		info.AppendFormat(" schedule(%s)", _schedule.CStr());
 		info.AppendFormat(" segmentation(%s)", _segmentation_rule.CStr());
+		info.AppendFormat(" variant_name(%s)", _selected_variant_names.size() > 0 ? ov::String::Join(_selected_variant_names, ",").CStr() : "all");
 
 		return info;
 	}

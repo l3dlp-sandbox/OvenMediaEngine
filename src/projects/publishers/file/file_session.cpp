@@ -151,26 +151,56 @@ namespace pub
 			writer->SetTimestampMode(ffmpeg::Writer::TIMESTAMP_STARTZERO_MODE);
 		}
 
-		for (auto &[track_id, track] : GetStream()->GetTracks())
+		// Add Tracks
+		if (record->GetTrackIds().empty() && record->GetVariantNames().empty())
 		{
-			if(IsSelectedTrack(track) == false)
+			// If there is no specified track, add all tracks.
+			for (auto &[track_id, media_track] : GetStream()->GetTracks())
 			{
-				continue;
+				if (AddTrack(media_track) == false)
+				{
+					continue;
+				}
+			}
+		}
+		else
+		{
+			// Select tracks by VariantNames
+			for (const auto &variant_name : record->GetVariantNames())
+			{
+				// VariantName format: "variantName:index", "variantName" (index is optional). if index is not specified, 0 is used.
+				auto vars			  = variant_name.Split(":", 2);
+				ov::String variant = vars[0];
+				int32_t variant_index	  = (vars.size() >= 2) ? ov::Converter::ToInt32(vars[1], 0) : 0;
+
+				// Find MediaTrack by VariantName and Index
+				auto media_track	  = GetStream()->GetTrackByVariant(variant, variant_index);
+				if (media_track == nullptr)
+				{
+					logtw("FileSession(%d) - Could not find track by VariantName: %s : %d", GetId(), variant.CStr(), variant_index);
+					continue;
+				}
+
+				if (AddTrack(media_track) == false)
+				{
+					continue;
+				}
 			}
 
-			if (ffmpeg::compat::IsSupportCodec(output_format, track->GetCodecId()) == false)
+			// Select tracks by TrackIds
+			for (const auto &track_id : record->GetTrackIds())
 			{
-				logtt("%s format does not support the codec(%s)", output_format.CStr(), cmn::GetCodecIdString(track->GetCodecId()));
-				continue;
-			}
+				auto media_track = GetStream()->GetTrack(track_id);
+				if (media_track == nullptr)
+				{
+					logtw("FileSession(%d) - Could not find track by TrackId: %d", GetId(), track_id);
+					continue;
+				}
 
-			// Choose default track of recording stream
-			SelectDefaultTrack(track);
-
-			bool ret = writer->AddTrack(track);
-			if (ret == false)
-			{
-				logtw("Failed to add new track");
+				if (AddTrack(media_track) == false)
+				{
+					continue;
+				}
 			}
 		}
 
@@ -206,29 +236,6 @@ namespace pub
 				_default_track = _default_track_by_type[cmn::MediaType::Audio];
 			}
 		}
-	}
-
-	// Check if the track is selected for recording.
-	bool FileSession::IsSelectedTrack(const std::shared_ptr<MediaTrack> &track)
-	{
-		auto record = GetRecord();
-		if (record == nullptr)
-		{
-			return false;
-		}
-
-		auto selected_track_ids = record->GetTrackIds();
-		auto selected_track_names = record->GetVariantNames();
-		if (selected_track_ids.size() > 0 || selected_track_names.size() > 0)
-		{
-			if ((find(selected_track_ids.begin(), selected_track_ids.end(), track->GetId()) == selected_track_ids.end()) &&
-				(find(selected_track_names.begin(), selected_track_names.end(), track->GetVariantName()) == selected_track_names.end()))
-			{
-				return false;
-			}
-		}
-
-		return true;
 	}
 
 	bool FileSession::StopRecord()
@@ -552,6 +559,27 @@ namespace pub
 	{
 		std::shared_lock<std::shared_mutex> lock(_writer_mutex);
 		return _writer;
+	}
+
+	bool FileSession::AddTrack(const std::shared_ptr<MediaTrack> &track)
+	{
+		auto writer = GetWriter();
+		if (writer == nullptr)
+		{
+			logte("Writer is not created.");
+			return false;
+		}
+
+		// Check already added track
+		if (writer->GetTrackByTrackId(track->GetId()) != nullptr)
+		{
+			logtw("Track already added. trackId:%d, variantName: %s", track->GetId(), track->GetVariantName().CStr());
+			return false;
+		}
+
+		SelectDefaultTrack(track);
+
+		return writer->AddTrack(track);
 	}
 
 }  // namespace pub

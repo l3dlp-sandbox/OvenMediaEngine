@@ -248,6 +248,39 @@ namespace ffmpeg
 		return true;
 	}
 
+	int32_t Writer::GetTrackCountByType(cmn::MediaType media_type)
+	{
+		std::shared_lock<std::shared_mutex> mlock(_track_map_lock);
+		auto track_map = _av_track_map;
+		mlock.unlock();
+
+		int32_t count = 0;
+		for (const auto &[track_id, track_pair] : track_map)
+		{
+			auto &media_track = track_pair.second;
+			if (media_track->GetMediaType() == media_type)
+			{
+				count++;
+			}
+		}
+
+		return count;
+	}
+
+	std::shared_ptr<MediaTrack> Writer::GetTrackByTrackId(int32_t media_track_id) const
+	{
+		std::shared_lock<std::shared_mutex> mlock(_track_map_lock);
+		auto track_map = _av_track_map;
+		mlock.unlock();
+
+		if (track_map.find(media_track_id) != track_map.end())
+		{
+			return track_map[media_track_id].second;
+		}
+
+		return nullptr;
+	}
+
 	bool Writer::Start()
 	{
 		SetState(WriterStateConnecting);

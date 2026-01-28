@@ -319,7 +319,9 @@ namespace info
 	{
 		ov::String info = "";
 
-		info.AppendFormat("uid(%s), vhost(%s) app(%s) stream(%s) -> protocol(%s) url(%s) streamKey(%s)", _id.CStr(), GetVhost().CStr(), GetApplication().CStr(), GetStreamName().CStr(), GetProtocol().CStr(), GetUrl().CStr(), GetStreamKey().CStr());
+		info.AppendFormat("uid(%s), vhost(%s) app(%s) stream(%s) -> protocol(%s) url(%s) streamKey(%s) variantNames(%s)",
+						  _id.CStr(), GetVhost().CStr(), GetApplication().CStr(), GetStreamName().CStr(), GetProtocol().CStr(), GetUrl().CStr(), GetStreamKey().CStr(),
+						  GetVariantNames().empty() ? "all" : ov::String::Join(GetVariantNames(), ",").CStr());
 
 		return info;
 	}

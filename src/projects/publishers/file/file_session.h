@@ -31,6 +31,8 @@ namespace pub
 
 		void SetRecord(std::shared_ptr<info::Record> &record);
 		std::shared_ptr<info::Record> &GetRecord();
+		
+		bool AddTrack(const std::shared_ptr<MediaTrack> &track);
 
 	private:
 		ov::String GetRootPath();
@@ -38,7 +40,6 @@ namespace pub
 		ov::String GetOutputFilePath();
 		ov::String GetOutputFileInfoPath();
 
-		bool IsSelectedTrack(const std::shared_ptr<MediaTrack> &track);
 		void SelectDefaultTrack(const std::shared_ptr<MediaTrack> &track);
 
 		std::shared_ptr<ffmpeg::Writer> CreateWriter();

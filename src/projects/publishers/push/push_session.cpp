@@ -66,8 +66,7 @@ namespace pub
 			dest_url = ov::String::FormatString("%s/%s", GetPush()->GetUrl().CStr(), GetPush()->GetStreamKey().CStr());
 		}
 
-		auto writer = CreateWriter();
-		if (writer == nullptr)
+		if (CreateWriter() == nullptr)
 		{
 			SetState(SessionState::Error);
 			GetPush()->SetState(info::Push::PushState::Error);
@@ -75,62 +74,99 @@ namespace pub
 			return false;
 		}
 
-		if (writer->SetUrl(dest_url, ffmpeg::compat::GetFormatByProtocolType(GetPush()->GetProtocolType())) == false)
+		if (GetWriter()->SetUrl(dest_url, ffmpeg::compat::GetFormatByProtocolType(GetPush()->GetProtocolType())) == false)
 		{
 			SetState(SessionState::Error);
 			GetPush()->SetState(info::Push::PushState::Error);
-			logte("Failed to set URL. Reason(%s), %s", writer->GetErrorMessage().CStr(), _push->GetInfoString().CStr());
+			logte("Failed to set URL. Reason(%s), %s", GetWriter()->GetErrorMessage().CStr(), _push->GetInfoString().CStr());
 			return false;
 		}
 
 		// RTMP, SRT, MPEG-TS Pushing uses different timestamp modes. default is zerobased.
 		if (GetPush()->GetTimestampMode() == TimestampMode::Original)
 		{
-			writer->SetTimestampMode(ffmpeg::Writer::TIMESTAMP_PASSTHROUGH_MODE);
+			GetWriter()->SetTimestampMode(ffmpeg::Writer::TIMESTAMP_PASSTHROUGH_MODE);
 		}
 		else
 		{
 			// Default TimestampMode is ZeroBased
-			writer->SetTimestampMode(ffmpeg::Writer::TIMESTAMP_STARTZERO_MODE);
+			GetWriter()->SetTimestampMode(ffmpeg::Writer::TIMESTAMP_STARTZERO_MODE);
 		}
 
-		for (auto &[track_id, track] : GetStream()->GetTracks())
+		// Set timeouts
+		GetWriter()->SetConnectionTimeout(GetPush()->GetConnectionTimeout());
+		GetWriter()->SetSendTimeout(GetPush()->GetSendTimeout());
+
+		// Add Tracks
+		if (GetPush()->GetTrackIds().empty() && GetPush()->GetVariantNames().empty())
 		{
-			// If the track defined in VariantNames exists, use it. If not, it is ignored.
-			// If VariantNames is empty, all tracks are selected.
-			if (IsSelectedTrack(track) == false)
+			// If there is no specified track, add all tracks.
+			for (auto &[track_id, media_track] : GetStream()->GetTracks())
 			{
-				continue;
+				if (AddTrack(media_track) == false)
+				{
+					continue;
+				}
+			}
+		}
+		else
+		{
+			// Select tracks by VariantNames
+			for (const auto &variant_name : GetPush()->GetVariantNames())
+			{
+				// VariantName format: "variantName:index", "variantName" (index is optional). if index is not specified, 0 is used.
+				auto vars			  = variant_name.Split(":", 2);
+				ov::String variant = vars[0];
+				int32_t variant_index	  = (vars.size() >= 2) ? ov::Converter::ToInt32(vars[1], 0) : 0;
+
+				// Find MediaTrack by VariantName and Index
+				auto media_track	  = GetStream()->GetTrackByVariant(variant, variant_index);
+				if (media_track == nullptr)
+				{
+					logtw("PushSession(%d) - Could not find track by VariantName: %s : %d", GetId(), variant.CStr(), variant_index);
+					continue;
+				}
+
+				if (AddTrack(media_track) == false)
+				{
+					continue;
+				}
 			}
 
-			if (IsSupportTrack(GetPush()->GetProtocolType(), track) == false)
+			// Select tracks by TrackIds
+			for (const auto &track_id : GetPush()->GetTrackIds())
 			{
-				logtt("Could not supported track. track_id:%d, codec_id: %d", track->GetId(), track->GetCodecId());
-				continue;
+				auto media_track = GetStream()->GetTrack(track_id);
+				if (media_track == nullptr)
+				{
+					logtw("PushSession(%d) - Could not find track by TrackId: %d", GetId(), track_id);
+					continue;
+				}
+
+				if (AddTrack(media_track) == false)
+				{
+					continue;
+				}
 			}
 
-			if (IsSupportCodec(GetPush()->GetProtocolType(), track->GetCodecId()) == false)
+			// Finally, add data track if exists.
+			if (auto data_track = GetStream()->GetFirstTrackByType(cmn::MediaType::Data); data_track != nullptr)
 			{
-				logtt("Could not supported codec. track_id:%d, codec_id: %d", track->GetId(), track->GetCodecId());
-				continue;
-			}
-
-			bool ret = writer->AddTrack(track);
-			if (ret == false)
-			{
-				logtw("Failed to add new track");
+				if (AddTrack(data_track) == false)
+				{
+					logtw("PushSession(%d) - Could not add data track. trackId:%d, variantName: %s", GetId(), data_track->GetId(), data_track->GetVariantName().CStr());
+				}
 			}
 		}
 
-		writer->SetConnectionTimeout(GetPush()->GetConnectionTimeout());
-		writer->SetSendTimeout(GetPush()->GetSendTimeout());
+
 
 		// Notice: If there are more than one video track, RTMP Push is not created and returns an error. You must use 1 video track.
-		if (writer->Start() == false)
+		if (GetWriter()->Start() == false)
 		{
 			SetState(SessionState::Error);
 			GetPush()->SetState(info::Push::PushState::Error);
-			logte("Failed to start session. Reason(%s), %s", writer->GetErrorMessage().CStr(), _push->GetInfoString().CStr());
+			logte("Failed to start session. Reason(%s), %s", GetWriter()->GetErrorMessage().CStr(), GetPush()->GetInfoString().CStr());
 			return false;
 		}
 
@@ -260,29 +296,6 @@ namespace pub
 		return _push;
 	}
 
-	bool PushSession::IsSelectedTrack(const std::shared_ptr<MediaTrack> &track)
-	{
-		auto selected_track_ids = GetPush()->GetTrackIds();
-		auto selected_track_names = GetPush()->GetVariantNames();
-
-		// Data type track is always selected.
-		if(track->GetMediaType() == cmn::MediaType::Data)
-		{
-			return true;
-		}
-
-		if (selected_track_ids.size() > 0 || selected_track_names.size() > 0)
-		{
-			if ((find(selected_track_ids.begin(), selected_track_ids.end(), track->GetId()) == selected_track_ids.end()) &&
-				(find(selected_track_names.begin(), selected_track_names.end(), track->GetVariantName()) == selected_track_names.end()))
-			{
-				return false;
-			}
-		}
-
-		return true;
-	}
-
 	bool PushSession::IsSupportTrack(const info::Push::ProtocolType protocol_type, const std::shared_ptr<MediaTrack> &track)
 	{
 		if (protocol_type == info::Push::ProtocolType::RTMP)
@@ -335,5 +348,47 @@ namespace pub
 		}
 
 		return false;
+	}
+
+	bool PushSession::AddTrack(const std::shared_ptr<MediaTrack> &track)
+	{
+		auto writer = GetWriter();
+		if (writer == nullptr)
+		{
+			return false;
+		}
+
+		// Check already added
+		if (writer->GetTrackByTrackId(track->GetId()) != nullptr)
+		{
+			logtw("Track already added. trackId:%d, variantName: %s", track->GetId(), track->GetVariantName().CStr());
+			return false;
+		}
+
+		if (IsSupportTrack(GetPush()->GetProtocolType(), track) == false)
+		{
+			logtw("Could not supported track. trackId:%d, codecId: %d", track->GetId(), track->GetCodecId());
+			return false;
+		}
+
+		if (IsSupportCodec(GetPush()->GetProtocolType(), track->GetCodecId()) == false)
+		{
+			logtw("Could not supported codec. trackId:%d, codecId: %d", track->GetId(), track->GetCodecId());
+			return false;
+		}
+
+		// RTMP protocol only supports one track per media type.
+		if (GetPush()->GetProtocolType() == info::Push::ProtocolType::RTMP)
+		{
+			if (GetWriter()->GetTrackCountByType(track->GetMediaType()) >= 1)
+			{
+				logtw("Could not add more than one video track for RTMP. trackId:%d, variantName: %s", track->GetId(), track->GetVariantName().CStr());
+				return false;
+			}
+		}
+
+		logtd("PushSession(%d) - Adding track. trackId:%d, variantName: %s", GetId(), track->GetId(), track->GetVariantName().CStr());
+
+		return writer->AddTrack(track);
 	}
 }  // namespace pub

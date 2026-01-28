@@ -71,6 +71,9 @@ namespace ffmpeg
 		bool AddTrack(const std::shared_ptr<MediaTrack> &media_track);
 		bool SendPacket(const std::shared_ptr<MediaPacket> &packet, uint64_t *sent_bytes = nullptr);
 		
+		int32_t GetTrackCountByType(cmn::MediaType media_type);
+		std::shared_ptr<MediaTrack> GetTrackByTrackId(int32_t track_id) const;
+				
 		std::chrono::high_resolution_clock::time_point GetLastPacketSentTime();
 
 		void SetTimestampMode(TimestampMode mode);

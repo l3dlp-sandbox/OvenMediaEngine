@@ -234,7 +234,7 @@ namespace pub
 		{
 			// State of disconnected and ready to connect
 			case pub::Session::SessionState::Ready:
-				logti("Push started. %s, connection timeout(%d), send timeout(%d)", push->GetInfoString().CStr(), push->GetConnectionTimeout(), push->GetSendTimeout());
+				logti("Push started. %s connectionTimeout(%d) sendTimeout(%d)", push->GetInfoString().CStr(), push->GetConnectionTimeout(), push->GetSendTimeout());
 				session->Start();			
 				break;
 			// State of stopped
@@ -242,7 +242,7 @@ namespace pub
 				[[fallthrough]];
 			// State of failed (connection refused, disconnected)
 			case pub::Session::SessionState::Error:
-				logti("Push restarted. %s, connection timeout(%d), send timeout(%d)", push->GetInfoString().CStr(), push->GetConnectionTimeout(), push->GetSendTimeout());
+				logti("Push restarted. %s connectionTimeout(%d) sendTimeout(%d)", push->GetInfoString().CStr(), push->GetConnectionTimeout(), push->GetSendTimeout());
 				session->Start();
 				break;
 			// State of Started

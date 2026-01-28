@@ -1305,7 +1305,7 @@ bool TranscoderStream::CreateEncoders(std::shared_ptr<MediaFrame> buffer)
 			}
 
 			// TODO(Keukhan): Add encoding option logs
-			logti("%s Encoder has been created. Encoder(%d) OutputTrack(%d) <Codec:%s,Module:%s:%d> TODO: <Encoding Option>", _log_prefix.CStr(),
+			logti("%s Encoder has been created. Encoder(%d) OutputTrack(%d) <Codec:%s,Module:%s:%d>", _log_prefix.CStr(),
 				  encoder_id, output_track->GetId(), cmn::GetCodecIdString(output_track->GetCodecId()), cmn::GetCodecModuleIdString(output_track->GetCodecModuleId()), output_track->GetCodecDeviceId());
 		}
 	}

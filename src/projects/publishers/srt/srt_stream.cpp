@@ -16,12 +16,8 @@
 #include "srt_private.h"
 #include "srt_session.h"
 
-#define logap(format, ...) logtp("[%s/%s(%u)] " format, GetApplicationName(), GetName().CStr(), GetId(), ##__VA_ARGS__)
-#define logat(format, ...) logtt("[%s/%s(%u)] " format, GetApplicationName(), GetName().CStr(), GetId(), ##__VA_ARGS__)
-#define logai(format, ...) logti("[%s/%s(%u)] " format, GetApplicationName(), GetName().CStr(), GetId(), ##__VA_ARGS__)
-#define logaw(format, ...) logtw("[%s/%s(%u)] " format, GetApplicationName(), GetName().CStr(), GetId(), ##__VA_ARGS__)
-#define logae(format, ...) logte("[%s/%s(%u)] " format, GetApplicationName(), GetName().CStr(), GetId(), ##__VA_ARGS__)
-#define logac(format, ...) logtc("[%s/%s(%u)] " format, GetApplicationName(), GetName().CStr(), GetId(), ##__VA_ARGS__)
+#define OV_LOG_PREFIX_FORMAT "[%s/%s(%u)] "
+#define OV_LOG_PREFIX_VALUE GetApplicationName(), GetName().CStr(), GetId()
 
 namespace pub
 {

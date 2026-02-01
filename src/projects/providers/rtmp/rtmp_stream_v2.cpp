@@ -26,10 +26,9 @@ namespace pvd::rtmp
 	std::shared_ptr<RtmpStreamV2> RtmpStreamV2::Create(StreamSourceType source_type, uint32_t client_id, const std::shared_ptr<ov::Socket> &client_socket, const std::shared_ptr<PushProvider> &provider)
 	{
 		auto stream = std::make_shared<RtmpStreamV2>(source_type, client_id, client_socket, provider);
-		if (stream != nullptr)
-		{
-			stream->Start();
-		}
+
+		stream->Start();
+
 		return stream;
 	}
 
@@ -175,13 +174,17 @@ namespace pvd::rtmp
 
 		_vhost_app_name = ocst::Orchestrator::GetInstance()->ResolveApplicationNameFromDomain(url->Host(), url->App());
 
-		if (_vhost_app_name.IsValid() == false)
+		if (_vhost_app_name.IsValid())
+		{
+			UpdateNamePath(_vhost_app_name);
+		}
+		else
 		{
 			// Since vhost/app/stream may later be changed by AdmissionWebhooks,
 			// it is set in advance even if it is not valid for now
 		}
 
-		_chunk_handler.SetVhostAppName(_vhost_app_name, GetName());
+		_chunk_handler.UpdateQueueAlias();
 
 		SetRequestedUrl(url);
 
@@ -302,7 +305,7 @@ namespace pvd::rtmp
 			case AccessController::VerificationResult::Off:
 				return true;
 
-			case AccessController::VerificationResult::Pass:
+			case AccessController::VerificationResult::Pass: {
 				// Lifetime
 				if (admission_webhooks->GetLifetime() != 0)
 				{
@@ -315,14 +318,17 @@ namespace pvd::rtmp
 				}
 
 				// Redirect URL
-				if (admission_webhooks->GetNewURL() != nullptr)
-				{
-					SetFinalUrl(admission_webhooks->GetNewURL()->Clone());
+				auto new_url = admission_webhooks->GetNewURL();
 
-					_chunk_handler.SetVhostAppName(_vhost_app_name, GetName());
+				if (new_url != nullptr)
+				{
+					SetFinalUrl(new_url->Clone());
+
+					_chunk_handler.UpdateQueueAlias();
 				}
 
 				return true;
+			}
 		}
 
 		return false;
@@ -363,6 +369,7 @@ namespace pvd::rtmp
 		}
 
 		_vhost_app_name = app_info.GetVHostAppName();
+		UpdateNamePath(_vhost_app_name);
 		SetName(final_url->Stream());
 
 		return true;

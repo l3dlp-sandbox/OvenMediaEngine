@@ -27,6 +27,11 @@ namespace pvd::rtmp
 
 			off_t HandleData(const std::shared_ptr<const ov::Data> &data);
 
+			const info::NamePath &GetNamePath() const
+			{
+				return _stream->GetNamePath();
+			}
+
 			bool IsHandshakeCompleted() const
 			{
 				return _is_handshake_completed;

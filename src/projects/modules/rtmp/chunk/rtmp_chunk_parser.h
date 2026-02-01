@@ -36,7 +36,7 @@ public:
 	};
 
 public:
-	RtmpChunkParser(int chunk_size);
+	RtmpChunkParser(size_t chunk_size);
 	virtual ~RtmpChunkParser();
 
 	ParseResult Parse(const std::shared_ptr<const ov::Data> &data, size_t *bytes_used);
@@ -49,13 +49,15 @@ public:
 		_chunk_size = chunk_size;
 	}
 
-	void SetAppName(const info::VHostAppName &app_name);
-	void SetStreamName(const ov::String &stream_name);
+	const info::NamePath &GetNamePath() const;
+	void UpdateNamePath(const info::NamePath &stream_name_path);
 
 	void Destroy();
 
 private:
 	std::shared_ptr<const RtmpChunkHeader> GetPrecedingChunkHeader(const uint32_t chunk_stream_id);
+
+	void UpdateQueueName();
 
 	ParseResult ParseBasicHeader(ov::ByteStream &stream, RtmpChunkHeader *chunk_header);
 	ParseResultForExtendedTimestamp ParseExtendedTimestamp(
@@ -76,6 +78,7 @@ private:
 
 	int64_t CalculateRolledTimestamp(const uint32_t stream_id, const int64_t last_timestamp, int64_t parsed_timestamp);
 
+private:
 #if DEBUG
 	uint64_t _chunk_index = 0ULL;
 	uint64_t _total_read_bytes = 0ULL;
@@ -89,6 +92,5 @@ private:
 	ov::Queue<std::shared_ptr<const RtmpMessage>> _message_queue{nullptr, 500};
 	size_t _chunk_size;
 
-	info::VHostAppName _vhost_app_name;
-	ov::String _stream_name;
+	info::NamePath _name_path;
 };

@@ -89,7 +89,8 @@ namespace pvd::rtmp
 
 		int32_t HandleData(const std::shared_ptr<const ov::Data> &data);
 
-		void SetVhostAppName(const info::VHostAppName &vhost_app_name, const ov::String &stream_name);
+		void UpdateQueueAlias();
+		const info::NamePath &GetNamePath() const;
 
 		int GetWaitingTrackCount() const;
 

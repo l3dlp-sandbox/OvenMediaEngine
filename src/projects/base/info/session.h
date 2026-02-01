@@ -4,6 +4,7 @@
 
 #include "./application.h"
 #include "./host.h"
+#include "./name_path.h"
 #include "./stream.h"
 #include "base/common_types.h"
 #include "base/ovlibrary/enable_shared_from_this.h"
@@ -25,6 +26,8 @@ namespace info
 
 		session_id_t GetId() const;
 		ov::String GetUUID() const;
+
+		const NamePath &GetNamePath() const;
 
 		void SetName(const ov::String &name);
 		const std::optional<ov::String> &GetName() const;
@@ -56,9 +59,12 @@ namespace info
 		uint64_t _sent_bytes	 = 0;
 		uint64_t _received_bytes = 0;
 
+		void UpdateNamePath();
 		void SetIds(const info::Stream &stream);
 
 	private:
+		NamePath _name_path;
+
 		session_id_t _id;
 		std::optional<ov::String> _name;
 		std::chrono::system_clock::time_point _created_time;

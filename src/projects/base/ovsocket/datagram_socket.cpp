@@ -15,11 +15,8 @@
 #undef OV_LOG_TAG
 #define OV_LOG_TAG "Socket.Datagram"
 
-#define logat(format, ...) logtt("[%p] " format, this, ##__VA_ARGS__)
-#define logai(format, ...) logti("[%p] " format, this, ##__VA_ARGS__)
-#define logaw(format, ...) logtw("[%p] " format, this, ##__VA_ARGS__)
-#define logae(format, ...) logte("[%p] " format, this, ##__VA_ARGS__)
-#define logac(format, ...) logtc("[%p] " format, this, ##__VA_ARGS__)
+#define OV_LOG_PREFIX_FORMAT "[%p] "
+#define OV_LOG_PREFIX_VALUE this
 
 namespace ov
 {

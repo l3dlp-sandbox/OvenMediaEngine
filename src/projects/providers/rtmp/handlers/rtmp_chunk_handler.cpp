@@ -597,12 +597,17 @@ namespace pvd::rtmp
 				.Build());
 	}
 
-	void RtmpChunkHandler::SetVhostAppName(const info::VHostAppName &vhost_app_name, const ov::String &stream_name)
+	const info::NamePath &RtmpChunkHandler::GetNamePath() const
+	{
+		return _stream->GetNamePath();
+	}
+
+	void RtmpChunkHandler::UpdateQueueAlias()
 	{
 		// If the queue inside `_chunk_parser` becomes full before `ValidatePublishUrl()` is called,
 		// the app/stream name is set here to provide the best possible hint about which queue it is.
 		// This will later be updated using `final_url` in `ValidatePublishUrl()`.
-		auto queue_name = ov::String::FormatString("RTMP queue for %s/%s", vhost_app_name.CStr(), stream_name.CStr());
+		auto queue_name = ov::String::FormatString("RTMP queue for %s", GetNamePath().CStr());
 
 		_chunk_parser.SetMessageQueueAlias(queue_name.CStr());
 	}

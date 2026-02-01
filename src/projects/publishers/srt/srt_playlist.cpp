@@ -14,15 +14,8 @@
 
 #include "srt_private.h"
 
-#define SRT_STREAM_DESC \
-	_stream_info->GetApplicationName(), _stream_info->GetName().CStr(), _stream_info->GetId()
-
-#define logap(format, ...) logtp("[%s/%s(%u)] " format, SRT_STREAM_DESC, ##__VA_ARGS__)
-#define logat(format, ...) logtt("[%s/%s(%u)] " format, SRT_STREAM_DESC, ##__VA_ARGS__)
-#define logai(format, ...) logti("[%s/%s(%u)] " format, SRT_STREAM_DESC, ##__VA_ARGS__)
-#define logaw(format, ...) logtw("[%s/%s(%u)] " format, SRT_STREAM_DESC, ##__VA_ARGS__)
-#define logae(format, ...) logte("[%s/%s(%u)] " format, SRT_STREAM_DESC, ##__VA_ARGS__)
-#define logac(format, ...) logtc("[%s/%s(%u)] " format, SRT_STREAM_DESC, ##__VA_ARGS__)
+#define OV_LOG_PREFIX_FORMAT "[%s/%s(%u)] "
+#define OV_LOG_PREFIX_VALUE _stream_info->GetApplicationName(), _stream_info->GetName().CStr(), _stream_info->GetId()
 
 namespace pub
 {

@@ -155,7 +155,7 @@ namespace pvd
 		ov::String _tc_url;
 		ov::String _app_name;
 		ov::String _domain_name;
-		info::VHostAppName _vhost_app_name;
+		info::VHostAppName _vhost_app_name = info::VHostAppName::InvalidVHostAppName();
 		ov::String _stream_name;
 		ov::String _device_string;
 

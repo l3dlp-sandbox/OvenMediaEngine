@@ -311,4 +311,9 @@ namespace pvd::rtmp
 			return result;
 		}
 
+		const info::NamePath &RtmpHandshakeHandler::GetNamePath() const
+		{
+			return _stream->GetNamePath();
+		}
+
 }  // namespace pvd::rtmp

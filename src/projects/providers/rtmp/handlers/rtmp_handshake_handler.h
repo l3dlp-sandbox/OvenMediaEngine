@@ -9,6 +9,7 @@
 #pragma once
 
 #include <modules/rtmp_v2/chunk/rtmp_define.h>
+#include <base/info/info.h>
 
 namespace pvd::rtmp
 {
@@ -27,10 +28,7 @@ namespace pvd::rtmp
 
 			off_t HandleData(const std::shared_ptr<const ov::Data> &data);
 
-			const info::NamePath &GetNamePath() const
-			{
-				return _stream->GetNamePath();
-			}
+			const info::NamePath &GetNamePath() const;
 
 			bool IsHandshakeCompleted() const
 			{

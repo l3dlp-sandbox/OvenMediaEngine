@@ -219,6 +219,44 @@ namespace pub
 		return nullptr;
 	}
 
+	bool Stream::EnterStart()
+	{
+		// If it is not in the Idle state before Start, it is an abnormal situation, so Start fails
+		if (!LockIfIdle())
+		{
+			logte("Cannot start stream [%s(%u)] because it is not in the Idle state", GetName().CStr(), GetId());
+			return false;
+		}
+
+		bool ok = Start();
+
+		Unlock();
+		
+		return ok;
+	}
+
+	bool Stream::EnterStop()
+	{
+		WaitUntilIdleAndLock();
+
+		bool ok = Stop();
+
+		Unlock();
+
+		return ok;
+	}
+
+	bool Stream::EnterUpdate(const std::shared_ptr<info::Stream> &info)
+	{
+		WaitUntilIdleAndLock();
+
+		bool ok = Update(info);
+
+		Unlock();
+
+		return ok;
+	}
+
 	bool Stream::Start()
 	{
 		if (_state != State::CREATED)
@@ -230,6 +268,54 @@ namespace pub
 
 		_started_time = std::chrono::system_clock::now();
 		_state = State::STARTED;
+		return true;
+	}
+
+	bool Stream::Stop()
+	{
+		logti("Try to stop %s stream [%s(%u)]", GetApplicationTypeName(), GetName().CStr(), GetId());
+
+		std::unique_lock<std::shared_mutex> worker_lock(_stream_worker_lock);
+
+		if (_state != State::STARTED)
+		{
+			return false;
+		}
+
+		_state = State::STOPPED;
+
+		for(const auto &worker : _stream_workers)
+		{
+			worker->Stop();
+		}
+
+		logti("[%s(%u)] %s - All StreamWorker has been stopped", GetName().CStr(), GetId(), GetApplicationTypeName());
+
+		_stream_workers.clear();
+
+		worker_lock.unlock();
+
+		std::lock_guard<std::shared_mutex> session_lock(_session_map_mutex);
+
+		logti("[%s(%u)] %s - Try to stop all sessions (%d)", GetName().CStr(), GetId(), GetApplicationTypeName(), _sessions.size());
+
+		for(const auto &x : _sessions)
+		{
+			auto session = x.second;
+			session->Stop();
+		}
+		_sessions.clear();
+
+		logti("[%s(%u)] %s stream has been stopped", GetName().CStr(), GetId(), GetApplicationTypeName());
+
+		return true;
+	}
+
+	bool Stream::Update(const std::shared_ptr<info::Stream> &info)
+	{
+		logti("[%s(%u)] %s stream has been updated (MSID : %d)", 
+							info->GetName().CStr(), info->GetId(), GetApplicationTypeName(), info->GetMsid());
+
 		return true;
 	}
 
@@ -274,54 +360,6 @@ namespace pub
 		}
 
 		worker_lock.unlock();
-
-		return true;
-	}
-
-	bool Stream::Stop()
-	{
-		logti("Try to stop %s stream [%s(%u)]", GetApplicationTypeName(), GetName().CStr(), GetId());
-
-		std::unique_lock<std::shared_mutex> worker_lock(_stream_worker_lock);
-
-		if (_state != State::STARTED)
-		{
-			return false;
-		}
-
-		_state = State::STOPPED;
-
-		for(const auto &worker : _stream_workers)
-		{
-			worker->Stop();
-		}
-
-		logti("[%s(%u)] %s - All StreamWorker has been stopped", GetName().CStr(), GetId(), GetApplicationTypeName());
-
-		_stream_workers.clear();
-
-		worker_lock.unlock();
-
-		std::lock_guard<std::shared_mutex> session_lock(_session_map_mutex);
-
-		logti("[%s(%u)] %s - Try to stop all sessions (%d)", GetName().CStr(), GetId(), GetApplicationTypeName(), _sessions.size());
-
-		for(const auto &x : _sessions)
-		{
-			auto session = x.second;
-			session->Stop();
-		}
-		_sessions.clear();
-
-		logti("[%s(%u)] %s stream has been stopped", GetName().CStr(), GetId(), GetApplicationTypeName());
-
-		return true;
-	}
-
-	bool Stream::OnStreamUpdated(const std::shared_ptr<info::Stream> &info)
-	{
-		logti("[%s(%u)] %s stream has been updated (MSID : %d)", 
-							info->GetName().CStr(), info->GetId(), GetApplicationTypeName(), info->GetMsid());
 
 		return true;
 	}

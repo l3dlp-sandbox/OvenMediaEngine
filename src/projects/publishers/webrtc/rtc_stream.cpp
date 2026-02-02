@@ -256,13 +256,13 @@ bool RtcStream::Stop()
 	return Stream::Stop();
 }
 
-bool RtcStream::OnStreamUpdated(const std::shared_ptr<info::Stream> &info)
+bool RtcStream::Update(const std::shared_ptr<info::Stream> &info)
 {
 	SetMsid(info->GetMsid());
 
 	//TODO(Getroot): check if the track has changed and re-create the SDP.
 
-	return Stream::OnStreamUpdated(info);
+	return Stream::Update(info);
 }
 
 bool RtcStream::IsSupportedCodec(cmn::MediaCodecId codec_id)

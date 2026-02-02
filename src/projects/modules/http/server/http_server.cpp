@@ -201,7 +201,7 @@ namespace http
 				if (client_iterator == _connection_list.end())
 				{
 					// If an error occurs during TCP or HTTP connection processing, it may not exist in _connection_list.
-					logtc("Could not find HTTP connection : %d / size(%d)", remote->GetNativeHandle(), _connection_list.size());
+					logtc("Could not find HTTP connection : %d / size(%zu)", remote->GetNativeHandle(), _connection_list.size());
 					return;
 				}
 

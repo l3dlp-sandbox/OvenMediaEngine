@@ -98,7 +98,7 @@ bool AmfStrictArray::Decode(ov::ByteStream &byte_stream, bool decode_marker)
 
 		if (type != _amf_data_type)
 		{
-			OV_ASSERT(type == _amf_data_type, "Type mismatch: expected: %d, actual: %d", _amf_data_type, type);
+			OV_ASSERT(type == _amf_data_type, "Type mismatch: expected: %d, actual: %d", ov::ToUnderlyingType(_amf_data_type), ov::ToUnderlyingType(type));
 			return false;
 		}
 	}

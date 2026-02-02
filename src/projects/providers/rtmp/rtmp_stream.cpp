@@ -1066,7 +1066,7 @@ namespace pvd
 					result = ReceiveWindowAcknowledgementSize(message);
 					break;
 				default:
-					logaw("Unknown Type - Type(%d)", message->header->completed.type_id);
+					logaw("Unknown Type - Type(%d)", ov::ToUnderlyingType(message->header->completed.type_id));
 					break;
 			}
 
@@ -1374,7 +1374,7 @@ namespace pvd
 
 					if (property == nullptr)
 					{
-						logat("Document has no property at %d: %s", size - 1, trigger.CStr());
+						logat("Document has no property at %zu: %s", size - 1, trigger.CStr());
 						break;
 					}
 
@@ -1414,7 +1414,7 @@ namespace pvd
 						}
 						else
 						{
-							logat("Document property type mismatch at %d: %s", size - 1, property->GetString().CStr());
+							logat("Document property type mismatch at %zu: %s", size - 1, property->GetString().CStr());
 							break;
 						}
 					}
@@ -1422,7 +1422,7 @@ namespace pvd
 					{
 						if (trigger_list.at(size) != property->GetString())
 						{
-							logat("Document property mismatch at %d: %s != %s", size - 1, trigger_list.at(size).CStr(), property->GetString().CStr());
+							logat("Document property mismatch at %zu: %s != %s", size - 1, trigger_list.at(size).CStr(), property->GetString().CStr());
 
 							break;
 						}
@@ -1612,7 +1612,7 @@ namespace pvd
 				_stream_message_cache_video_count++;
 				if (_stream_message_cache.size() > MAX_STREAM_MESSAGE_COUNT)
 				{
-					logaw("Rtmp input stream init message count over - size(%d:%d)",
+					logaw("Rtmp input stream init message count over - size(%zu:%d)",
 						  _stream_message_cache.size(),
 						  MAX_STREAM_MESSAGE_COUNT);
 				}
@@ -1807,7 +1807,7 @@ namespace pvd
 				_stream_message_cache_audio_count++;
 				if (_stream_message_cache.size() > MAX_STREAM_MESSAGE_COUNT)
 				{
-					logaw("Rtmp input stream init message count over -  size(%d:%d)",
+					logaw("Rtmp input stream init message count over -  size(%zu:%d)",
 						  _stream_message_cache.size(),
 						  MAX_STREAM_MESSAGE_COUNT);
 				}

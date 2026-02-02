@@ -663,13 +663,13 @@ namespace pvd::rtmp
 
 		if (SendWindowAcknowledgementSize(DEFAULT_ACKNOWNLEDGEMENT_SIZE) == false)
 		{
-			logae("Failed to send WindowAcknowledgementSize(%u)", DEFAULT_ACKNOWNLEDGEMENT_SIZE);
+			logae("Failed to send WindowAcknowledgementSize(%zu)", DEFAULT_ACKNOWNLEDGEMENT_SIZE);
 			return false;
 		}
 
 		if (SendSetPeerBandwidth(DEFAULT_PEER_BANDWIDTH) == false)
 		{
-			logae("Failed to send SetPeerBandwidth(%u)", DEFAULT_PEER_BANDWIDTH);
+			logae("Failed to send SetPeerBandwidth(%zu)", DEFAULT_PEER_BANDWIDTH);
 			return false;
 		}
 
@@ -681,7 +681,7 @@ namespace pvd::rtmp
 
 		if (SendSetChunkSize(DEFAULT_CHUNK_SIZE) == false)
 		{
-			logte("Failed to send SetChunkSize(%u)", DEFAULT_CHUNK_SIZE);
+			logte("Failed to send SetChunkSize(%zu)", DEFAULT_CHUNK_SIZE);
 			return false;
 		}
 
@@ -844,7 +844,7 @@ namespace pvd::rtmp
 				break;
 
 			default:
-				logae("OnAmfMetadata - Invalid type of metadata: %d", property->GetType());
+				logae("OnAmfMetadata - Invalid type of metadata: %d", ov::ToUnderlyingType(property->GetType()));
 				return false;
 		}
 
@@ -900,7 +900,7 @@ namespace pvd::rtmp
 				else
 				{
 					logae("Not supported audio codec: %s(%d) (raw: %s)",
-						  cmn::GetCodecIdString(value), value,
+						  cmn::GetCodecIdString(value), ov::ToUnderlyingType(value),
 						  audio.codec_raw.CStr());
 					audio.codec_id = cmn::MediaCodecId::None;
 				}
@@ -942,7 +942,7 @@ namespace pvd::rtmp
 				}
 				else
 				{
-					logae("Not supported video codec: %s(%d) (raw: %s)", cmn::GetCodecIdString(value), value, video.codec_raw.CStr());
+					logae("Not supported video codec: %s(%d) (raw: %s)", cmn::GetCodecIdString(value), ov::ToUnderlyingType(value), video.codec_raw.CStr());
 					video.codec_id = cmn::MediaCodecId::None;
 				}
 			}
@@ -1133,7 +1133,7 @@ namespace pvd::rtmp
 						}
 						else
 						{
-							logat("Document property type mismatch at %d: %s", size - 1, property->GetString().CStr());
+							logat("Document property type mismatch at %zu: %s", size - 1, property->GetString().CStr());
 							break;
 						}
 					}
@@ -1141,7 +1141,7 @@ namespace pvd::rtmp
 					{
 						if (trigger_list.at(size) != property->GetString())
 						{
-							logat("Document property mismatch at %d: %s != %s", size - 1, trigger_list.at(size).CStr(), property->GetString().CStr());
+							logat("Document property mismatch at %zu: %s != %s", size - 1, trigger_list.at(size).CStr(), property->GetString().CStr());
 							break;
 						}
 					}
@@ -1837,7 +1837,7 @@ namespace pvd::rtmp
 				OV_CASE_BREAK(modules::rtmp::MessageTypeID::Amf0Command, result = HandleAmf0Command(message));
 
 				default:
-					logaw("Not handled RTMP message: %d (%s)", type_id, modules::rtmp::EnumToString(type_id));
+					logaw("Not handled RTMP message: %d (%s)", ov::ToUnderlyingType(type_id), modules::rtmp::EnumToString(type_id));
 					break;
 			}
 

@@ -78,7 +78,7 @@ RtmpChunkParser::ParseResult RtmpChunkParser::Parse(const std::shared_ptr<const 
 
 					if (parsed_chunk_header->basic_header.format_type != RtmpMessageHeaderType::T3)
 					{
-						logae("Expected Type 3 header, but got: %d", parsed_chunk_header->basic_header.format_type);
+						logae("Expected Type 3 header, but got: %d", ov::ToUnderlyingType(parsed_chunk_header->basic_header.format_type));
 					}
 
 					_pending_message_map.erase(new_chunk_stream_id);
@@ -367,10 +367,10 @@ RtmpChunkParser::ParseResult RtmpChunkParser::ParseMessageHeader(ov::ByteStream 
 		(preceding_chunk_header == nullptr))
 	{
 		// T1/T2/T3 message header must have a preceding chunk header
-		logae("Could not find preceding chunk header for chunk_stream_id: %u (type: %d)", basic_header.chunk_stream_id, basic_header.format_type);
+		logae("Could not find preceding chunk header for chunk_stream_id: %u (type: %d)", basic_header.chunk_stream_id, ov::ToUnderlyingType(basic_header.format_type));
 
 #if DEBUG
-		logae("chunk_index: %llu, total_read_bytes: %llu", _chunk_index, _total_read_bytes);
+		logae("chunk_index: %" PRIu64 ", total_read_bytes: %" PRIu64, _chunk_index, _total_read_bytes);
 #endif	// DEBUG
 
 		return ParseResult::Error;
@@ -567,7 +567,7 @@ int64_t RtmpChunkParser::CalculateRolledTimestamp(const uint32_t stream_id, cons
 		// Non-adjacent timestamp - Need to roll timestamp
 		new_timestamp = last_timestamp + (1LL << SERIAL_BITS) - (last_timestamp % (1LL << SERIAL_BITS)) + parsed_timestamp;
 
-		logai("Timestamp is rolled: last TS: %lld, parsed: %lld, new: %lld",
+		logai("Timestamp is rolled: last TS: %" PRId64 ", parsed: %" PRId64 ", new: %" PRId64,
 			  last_timestamp,
 			  parsed_timestamp,
 			  new_timestamp);

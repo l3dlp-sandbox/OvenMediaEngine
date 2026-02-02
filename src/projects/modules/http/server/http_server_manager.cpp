@@ -49,7 +49,7 @@ namespace http
 							{
 								if (physical_port->GetWorkerCount() != worker_count)
 								{
-									logtw("The number of workers in the existing physical port differs from the number of workers passed by the argument: physical port: %zu, argument: %zu",
+									logtw("The number of workers in the existing physical port differs from the number of workers passed by the argument: physical port: %d, argument: %d",
 										  physical_port->GetWorkerCount(), worker_count);
 									logtw("Because worker counts are different, the first initialized count is used: %d", physical_port->GetWorkerCount());
 								}

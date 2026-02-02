@@ -67,7 +67,7 @@ namespace http
 			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(response->GetResponseTime() - request->GetCreateTime()).count();
 
 			return ov::String::FormatString(
-				"[Client] %s (Elapsed: %llu) \n"
+				"[Client] %s (Elapsed: %" PRId64 ") \n"
 				"[Request] %s %s (HTTP/%s, Request Time: %s)\n"
 				"[Response] %d %s (%d bytes sent, Response Time: %s)",
 
@@ -75,7 +75,7 @@ namespace http
 
 				http::StringFromMethod(request->GetMethod()).CStr(), request->GetUri().CStr(), request->GetHttpVersion().CStr(), ov::Converter::ToISO8601String(request->GetCreateTime()).CStr(),
 
-				response->GetStatusCode(), http::StringFromStatusCode(response->GetStatusCode()),
+				ov::ToUnderlyingType(response->GetStatusCode()), http::StringFromStatusCode(response->GetStatusCode()),
 				response->GetSentSize(), ov::Converter::ToISO8601String(response->GetResponseTime()).CStr());
 		}
 

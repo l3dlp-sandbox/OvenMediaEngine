@@ -35,7 +35,7 @@ namespace pub
 			return false;
 		}
 
-		logtt("FileStream(%ld) has been started", GetId());
+		logtt("FileStream(%u) has been started", GetId());
 
 		if (!CreateStreamWorker(2))
 		{

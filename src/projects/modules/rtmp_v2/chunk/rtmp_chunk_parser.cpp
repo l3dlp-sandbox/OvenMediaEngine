@@ -81,7 +81,7 @@ namespace modules::rtmp
 
 						if (parsed_chunk_header->basic_header.format_type != MessageHeaderType::T3)
 						{
-							logte("Expected Type 3 header, but got: %d", parsed_chunk_header->basic_header.format_type);
+							logte("Expected Type 3 header, but got: %d", ov::ToUnderlyingType(parsed_chunk_header->basic_header.format_type));
 						}
 
 						_pending_message_map.erase(new_chunk_stream_id);
@@ -330,10 +330,10 @@ namespace modules::rtmp
 			(preceding_chunk_header == nullptr))
 		{
 			// T1/T2/T3 message header must have a preceding chunk header
-			logte("Could not find preceding chunk header for chunk_stream_id: %u (type: %d)", basic_header.chunk_stream_id, basic_header.format_type);
+			logte("Could not find preceding chunk header for chunk_stream_id: %u (type: %d)", basic_header.chunk_stream_id, ov::ToUnderlyingType(basic_header.format_type));
 
 #if DEBUG
-			logte("chunk_index: %llu, total_read_bytes: %llu", _chunk_index, _total_read_bytes);
+			logte("chunk_index: %" PRIu64 ", total_read_bytes: %" PRIu64, _chunk_index, _total_read_bytes);
 #endif	// DEBUG
 
 			return ParseResult::Error;
@@ -530,7 +530,7 @@ namespace modules::rtmp
 			// Non-adjacent timestamp - Need to roll timestamp
 			new_timestamp = last_timestamp + (1LL << SERIAL_BITS) - (last_timestamp % (1LL << SERIAL_BITS)) + parsed_timestamp;
 
-			logti("Timestamp is rolled for stream id: %u: last TS: %lld, parsed: %lld, new: %lld",
+			logti("Timestamp is rolled for stream id: %u: last TS: %" PRId64 ", parsed: %" PRId64 ", new: %" PRId64,
 				  stream_id,
 				  last_timestamp,
 				  parsed_timestamp,

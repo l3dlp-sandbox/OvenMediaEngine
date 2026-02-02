@@ -41,6 +41,18 @@ public:
 	ov::String GetStatsString();
 	ov::String GetInfoString();
 
+public:
+	enum class OutputFrameCopyMode
+	{
+		ShallowCopy = 0,
+		DeepCopy	= 2
+	};
+
+	void SetOutputFrameCopyMode(OutputFrameCopyMode mode)
+	{
+		_output_frame_copy_mode = mode;
+	}
+	
 private:
 	cmn::Timebase _input_timebase;
 	double _input_framerate;
@@ -57,6 +69,9 @@ private:
 	
 	// Buffer for storing frames
 	std::vector<std::shared_ptr<MediaFrame>> _frames;
+
+	// Output frame copy mode
+	OutputFrameCopyMode _output_frame_copy_mode = OutputFrameCopyMode::DeepCopy;
 
 	// The next PTS to be output
 	int64_t _curr_pts;

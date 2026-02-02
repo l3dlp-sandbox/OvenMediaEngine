@@ -313,6 +313,39 @@ bool FilterRescaler::InitializeFilterDescription()
 	return true;
 }
 
+bool FilterRescaler::InitializeFpsFilter()
+{
+	// Set input parameters
+	_fps_filter.SetInputTimebase(_input_track->GetTimeBase());
+	_fps_filter.SetInputFrameRate(_input_track->GetFrameRate());
+
+	// Configure skip frames
+	int32_t skip_frames_config = _output_track->GetSkipFramesByConfig();
+#if _SKIP_FRAMES_ENABLED
+	int32_t skip_frames = (skip_frames_config >= 0) ? skip_frames_config : -1;
+	_fps_filter.SetSkipFrames(skip_frames);
+	
+	// If skip frames is enabled, maintain input framerate; otherwise use output framerate
+	bool is_skip_enabled = (skip_frames >= 0);
+	float output_framerate = is_skip_enabled ? _input_track->GetFrameRate() : _output_track->GetFrameRate();
+	_fps_filter.SetOutputFrameRate(output_framerate);
+#else
+	_fps_filter.SetSkipFrames(-1);  // Disabled
+	_fps_filter.SetOutputFrameRate(_output_track->GetFrameRate());
+#endif
+
+	// Set frame copy mode based on resolution
+	// Use deep copy when resolutions match to prevent in-place modifications by FFmpeg filter graph
+	bool same_resolution = (_input_track->GetWidth() == _output_track->GetWidth() &&
+							_input_track->GetHeight() == _output_track->GetHeight());
+	
+	auto copy_mode = same_resolution ? FilterFps::OutputFrameCopyMode::DeepCopy 
+									 : FilterFps::OutputFrameCopyMode::ShallowCopy;
+	_fps_filter.SetOutputFrameCopyMode(copy_mode);
+	
+	return true;
+}
+
 bool FilterRescaler::Configure(const std::shared_ptr<MediaTrack> &input_track, const std::shared_ptr<MediaTrack> &output_track)
 {
 	SetState(State::CREATED);
@@ -321,24 +354,20 @@ bool FilterRescaler::Configure(const std::shared_ptr<MediaTrack> &input_track, c
 	_output_track = output_track;
 
 	// Initialize source parameters
-	_src_width = _input_track->GetWidth();
-	_src_height = _input_track->GetHeight();
-	_src_pixfmt = ffmpeg::compat::ToAVPixelFormat(_input_track->GetColorspace());
-
-	// Initialize Framerate & Skip Frames Filter
-	_fps_filter.SetInputTimebase(_input_track->GetTimeBase());
-	_fps_filter.SetInputFrameRate(_input_track->GetFrameRate());
-#if _SKIP_FRAMES_ENABLED
-	_fps_filter.SetSkipFrames(_output_track->GetSkipFramesByConfig() >= 0 ? _output_track->GetSkipFramesByConfig() : -1);
-	// If SkipFrames is enabled, set it to be the same as the output framerate of the FPS filter so that it works only with skip frames.
-	_fps_filter.SetOutputFrameRate((_fps_filter.GetSkipFrames() >= 0) ? _input_track->GetFrameRate() : _output_track->GetFrameRate());
-#else
-	_fps_filter.SetSkipFrames(-1);	// Disable 
-	_fps_filter.SetOutputFrameRate(_output_track->GetFrameRate());
-#endif
+	_src_width	  = _input_track->GetWidth();
+	_src_height	  = _input_track->GetHeight();
+	_src_pixfmt	  = ffmpeg::compat::ToAVPixelFormat(_input_track->GetColorspace());
 
 	// Initialize input buffer queue
 	_input_buffer.SetThreshold(MAX_QUEUE_SIZE);
+
+	// Initialize FPS filter
+	if(InitializeFpsFilter() == false)
+	{
+		SetState(State::ERROR);
+
+		return false;
+	}
 
 	// Initialize the av filter graph
 	if (InitializeFilterDescription() == false)
@@ -477,8 +506,8 @@ bool FilterRescaler::PushProcess(std::shared_ptr<MediaFrame> media_frame)
 		return false;
 	}
 
-	auto av_frame = ffmpeg::compat::ToAVFrame(cmn::MediaType::Video, media_frame);
-	if (!av_frame)
+	auto src_frame = ffmpeg::compat::ToAVFrame(cmn::MediaType::Video, media_frame);
+	if (!src_frame)
 	{
 		logte("Could not allocate the video frame data");
 
@@ -487,12 +516,12 @@ bool FilterRescaler::PushProcess(std::shared_ptr<MediaFrame> media_frame)
 		return false;
 	}
 
-	AVFrame *transfer_av_frame = nullptr;
+	AVFrame *transfer_frame = nullptr;
 	// GPU Memory -> Host Memory
-	if (_use_hwframe_transfer == true && av_frame->hw_frames_ctx != nullptr)
+	if (_use_hwframe_transfer == true && src_frame->hw_frames_ctx != nullptr)
 	{
-		transfer_av_frame = ::av_frame_alloc();
-		if (::av_hwframe_transfer_data(transfer_av_frame, av_frame, 0) < 0)
+		transfer_frame = ::av_frame_alloc();
+		if (::av_hwframe_transfer_data(transfer_frame, src_frame, 0) < 0)
 		{
 			logte("Error transferring the data to system memory\n");
 
@@ -501,13 +530,13 @@ bool FilterRescaler::PushProcess(std::shared_ptr<MediaFrame> media_frame)
 			return false;
 		}
 
-		transfer_av_frame->pts = av_frame->pts;
+		transfer_frame->pts = src_frame->pts;
 	}
 
-	AVFrame *av_frame_for_filter = (transfer_av_frame != nullptr) ? transfer_av_frame : av_frame;
+	AVFrame *feed_frame = (transfer_frame != nullptr) ? transfer_frame : src_frame;
 
 	// Send to filtergraph
-	int ret = ::av_buffersrc_write_frame(_buffersrc_ctx, av_frame_for_filter);
+	int ret = ::av_buffersrc_write_frame(_buffersrc_ctx, feed_frame);
 	if (ret == AVERROR_EOF)
 	{
 		logtw("filter graph has been flushed and will not accept any more frames.");
@@ -532,7 +561,7 @@ bool FilterRescaler::PushProcess(std::shared_ptr<MediaFrame> media_frame)
 	}
 	else if (ret < 0)
 	{
-		logte("An error occurred while feeding to filtergraph: format: %d, pts: %lld, queue.size: %d", av_frame->format, av_frame->pts, _input_buffer.Size());
+		logte("An error occurred while feeding to filtergraph: format: %d, pts: %lld, queue.size: %d", src_frame->format, src_frame->pts, _input_buffer.Size());
 
 		SetState(State::ERROR);
 
@@ -542,9 +571,9 @@ bool FilterRescaler::PushProcess(std::shared_ptr<MediaFrame> media_frame)
 	}
 
 	// Free the temporary AVFrame used for transfer
-	if (transfer_av_frame != nullptr)
+	if (transfer_frame != nullptr)
 	{
-		av_frame_free(&transfer_av_frame);
+		av_frame_free(&transfer_frame);
 	}
 
 	return true;

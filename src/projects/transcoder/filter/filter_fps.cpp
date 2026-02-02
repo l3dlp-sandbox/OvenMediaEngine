@@ -180,7 +180,7 @@ std::shared_ptr<MediaFrame> FilterFps::Pop()
 													 (AVRational){_input_timebase.GetNum(), _input_timebase.GetDen()},
 													 (AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
 
-		auto pop_frame = _frames[0]->CloneFrame(true);
+		auto pop_frame = _frames[0]->CloneFrame(_output_frame_copy_mode == OutputFrameCopyMode::DeepCopy ? true : false);
 		pop_frame->SetPts(curr_timebase_pts);
 
 		int64_t duration = next_timebase_pts - curr_timebase_pts;

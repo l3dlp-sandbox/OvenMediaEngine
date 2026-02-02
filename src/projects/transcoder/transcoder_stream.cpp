@@ -2297,7 +2297,8 @@ void TranscoderStream::SpreadToFilters(MediaTrackId decoder_id, std::shared_ptr<
 
 	for (auto &filter_id : filter_ids)
 	{
-		auto frame_clone = frame->CloneFrame(true);
+		// Clone only the frame information, share the raw data.
+		auto frame_clone = frame->CloneFrame();
 		if (frame_clone == nullptr)
 		{
 			logte("%s Failed to clone frame", _log_prefix.CStr());

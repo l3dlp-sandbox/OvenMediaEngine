@@ -432,8 +432,8 @@ namespace info
 		info.AppendFormat(" tmp_path(%s)", _tmp_path.CStr());
 		info.AppendFormat(" file_path(%s)", _output_file_path.CStr());
 		info.AppendFormat(" info_path(%s)", _output_info_path.CStr());
-		info.AppendFormat(" total_bytes(%lld)", _record_total_bytes);
-		info.AppendFormat(" total_time(%lld)", _record_total_time);
+		info.AppendFormat(" total_bytes(%" PRIu64 ")", _record_total_bytes);
+		info.AppendFormat(" total_time(%" PRIu64 ")", _record_total_time);
 		info.AppendFormat(" created_time(%s)", ov::Converter::ToString(_created_time).CStr());
 		info.AppendFormat(" start_time(%s)", ov::Converter::ToString(_record_start_time).CStr());
 		info.AppendFormat(" stop_time(%s)", ov::Converter::ToString(_record_stop_time).CStr());

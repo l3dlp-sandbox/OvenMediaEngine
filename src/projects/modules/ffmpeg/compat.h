@@ -448,7 +448,7 @@ namespace ffmpeg
 						message.AppendFormat("%d Hz, %s, %s, ", context->sample_rate, channel_layout, ::av_get_sample_fmt_name(static_cast<AVSampleFormat>(context->sample_fmt)));
 					}
 
-					message.AppendFormat("%d kbps, ", (context->bit_rate / 1024));
+					message.AppendFormat("%" PRId64 " kbps, ", (context->bit_rate / 1024));
 
 					// timebase: 1/48000
 					message.AppendFormat("timebase: %d/%d", context->time_base.num, context->time_base.den);

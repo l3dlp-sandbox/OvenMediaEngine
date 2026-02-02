@@ -156,7 +156,7 @@ namespace mpegts
 				str += ov::String::FormatString("    Time Specified Flag: %u\n", _splice_time._time_specified_flag);
 				if (_splice_time._time_specified_flag == 1)
 				{
-					str += ov::String::FormatString("    PTS Time: %llu\n", _splice_time._pts_time / 90);
+					str += ov::String::FormatString("    PTS Time: %" PRId64 "\n", _splice_time._pts_time / 90);
 				}
 			}
 
@@ -164,7 +164,7 @@ namespace mpegts
 			{
 				str += ov::String::FormatString("  Break Duration:\n");
 				str += ov::String::FormatString("    Auto Return: %u\n", _break_duration._auto_return);
-				str += ov::String::FormatString("    Duration: %llu\n", _break_duration._duration / 90);
+				str += ov::String::FormatString("    Duration: %" PRIu64 "\n", _break_duration._duration / 90);
 			}
 
 			str += ov::String::FormatString("  Unique Program Id: %u\n", _unique_program_id);

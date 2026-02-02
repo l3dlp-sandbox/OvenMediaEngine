@@ -44,8 +44,8 @@ ifneq ($(shell cat /etc/*release 2>/dev/null | grep "^ID=" | grep "alpine"),)
 endif
 
 # Suppress "warning: attribute ignored" for SRT
-GLOBAL_CFLAGS_COMMON := $(GCC_COLOR_OPTION) -Wall -Wno-attributes $(__EXTRA_CPPFLAGS) $(CPPFLAGS) $(CFLAGS)
-GLOBAL_CXXFLAGS_COMMON := $(GCC_COLOR_OPTION) -Wall -Wno-attributes $(__EXTRA_CPPFLAGS) $(CPPFLAGS) $(CXXFLAGS)
+GLOBAL_CFLAGS_COMMON := $(GCC_COLOR_OPTION) -Wall -Wformat-security -Wno-attributes $(__EXTRA_CPPFLAGS) $(CPPFLAGS) $(CFLAGS)
+GLOBAL_CXXFLAGS_COMMON := $(GCC_COLOR_OPTION) -Wall -Wformat-security -Wno-attributes $(__EXTRA_CPPFLAGS) $(CPPFLAGS) $(CXXFLAGS)
 GLOBAL_LDFLAGS_COMMON := $(GCC_COLOR_OPTION) $(__EXTRA_LDFLAGS) $(LDFLAGS)
 
 GLOBAL_CFLAGS_DEBUG := -g -DDEBUG -D_DEBUG $(GLOBAL_CFLAGS_COMMON)

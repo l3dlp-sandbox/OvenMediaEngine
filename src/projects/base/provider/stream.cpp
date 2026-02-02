@@ -83,7 +83,7 @@ namespace pvd
 		{
 			auto reconnection_time_us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - _last_pkt_received_time).count();
 
-			logti("Time taken to reconnect is %lld milliseconds. add to the basetime", reconnection_time_us/1000);
+			logti("Time taken to reconnect is %" PRId64 " milliseconds. add to the basetime", reconnection_time_us/1000);
 
 			_base_timestamp_us += reconnection_time_us;
 		}
@@ -112,7 +112,7 @@ namespace pvd
 		if (current_estimated_ts <= _max_generated_timestamp_ms)
 		{
 			current_estimated_ts = _max_generated_timestamp_ms + 1;
-			logti("%s/%s(%u) Adjust current estimated timestamp to avoid going backward - last_media_timestamp_ms: %lld, elapsed_from_last_media_timestamp: %lld, adjusted_timestamp: %lld ms",
+			logti("%s/%s(%u) Adjust current estimated timestamp to avoid going backward - last_media_timestamp_ms: %" PRId64 ", elapsed_from_last_media_timestamp: %" PRId64 ", adjusted_timestamp: %" PRId64 " ms",
 			GetApplicationName(), GetName().CStr(), GetId(),
 			_last_media_timestamp_ms, _elapsed_from_last_media_timestamp.Elapsed(), current_estimated_ts);
 		}

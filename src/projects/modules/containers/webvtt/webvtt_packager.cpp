@@ -95,7 +95,7 @@ namespace webvtt
 
 		vtt_text = "WEBVTT\n";
 		// X-TIMESTAMP-MAP=LOCAL:00:00:00.000,MPEGTS:start_time_ms*90
-		vtt_text += ov::String::FormatString("X-TIMESTAMP-MAP=LOCAL:00:00:00.000,MPEGTS:%lld\n", (int64_t)(start_time_ms) * 90);
+		vtt_text += ov::String::FormatString("X-TIMESTAMP-MAP=LOCAL:00:00:00.000,MPEGTS:%" PRId64"\n", (int64_t)(start_time_ms) * 90);
 		vtt_text += "\n\n";
 
 		return vtt_text;
@@ -139,7 +139,7 @@ namespace webvtt
 			{
 				if (frame->IsUsed() == false)
 				{
-					logtw("WebVTT Packager: Removing unused frame: StartTimeMs=%lld, EndTimeMs=%lld, Text Length=%zu / %s", frame->GetStartTimeMs(), frame->GetEndTimeMs(), frame->GetText().GetLength(), frame->GetText().CStr());
+					logtw("WebVTT Packager: Removing unused frame: StartTimeMs=%" PRId64 ", EndTimeMs=%" PRId64 ", Text Length=%zu / %s", frame->GetStartTimeMs(), frame->GetEndTimeMs(), frame->GetText().GetLength(), frame->GetText().CStr());
 				}
 
 				it = _frames.erase(it);

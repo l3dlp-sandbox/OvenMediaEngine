@@ -45,11 +45,11 @@ bool HlsMediaPlaylist::OnSegmentCreated(const std::shared_ptr<mpegts::Segment> &
 
 	std::lock_guard<std::shared_mutex> lock(_segments_mutex);
 
-	logtt("HlsMediaPlaylist::OnSegmentCreated - number(%d) url(%s) duration_us(%.3f)\n", segment->GetNumber(), segment->GetUrl().CStr(), segment->GetDurationMs());
+	logtt("HlsMediaPlaylist::OnSegmentCreated - number(%" PRIu64 ") url(%s) duration_us(%.3f)\n", segment->GetNumber(), segment->GetUrl().CStr(), segment->GetDurationMs());
 
 	if (segment->HasMarker() == true)
 	{
-		logti("Marker is found in the segment %d (%d)", segment->GetNumber(), segment->GetMarkers().size());
+		logti("Marker is found in the segment %" PRIu64 " (%zu)", segment->GetNumber(), segment->GetMarkers().size());
 	}
 
 	_segments.emplace(segment->GetNumber(), segment);

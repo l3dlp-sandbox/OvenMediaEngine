@@ -8,6 +8,8 @@
 //==============================================================================
 #pragma once
 
+#include "./format_string.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -165,7 +167,7 @@ extern "C"
 	bool ov_log_set_enable(const char *tag_regex, OVLogLevel level, bool is_enabled);
 	bool ov_log_get_enabled(const char *tag, OVLogLevel level);
 
-	void ov_log_internal(OVLogLevel level, const char *tag, const char *file, int line, const char *method, const char *format, ...);
+	void ov_log_internal(OVLogLevel level, const char *tag, const char *file, int line, const char *method, const char *format, ...) OV_PRINTF_FORMAT(6, 7);
 	void ov_log_set_path(const char *log_path);
 	const char *ov_log_get_path();
 

@@ -474,7 +474,7 @@ namespace ov
 				});
 				if (!result || _stop)
 				{
-					loge(LOG_TAG, "[%s] queue is full. q.size(%d), q.threshold(%d)", _urn->ToString().CStr(), _size, _threshold);
+					loge(LOG_TAG, "[%s] queue is full. q.size(%zu), q.threshold(%zu)", _urn->ToString().CStr(), _size, _threshold);
 					delete node;
 					return;
 				}

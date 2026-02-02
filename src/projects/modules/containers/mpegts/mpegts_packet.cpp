@@ -82,7 +82,7 @@ namespace mpegts
 		size_t offset = 0;
 		uint8_t packet_count = 0;
 
-		logtt("PES Data Length: %d", pes_data_length);
+		logtt("PES Data Length: %zu", pes_data_length);
 
 		size_t total_payload_size = 0;
 

@@ -599,7 +599,7 @@ bool WebRtcPublisher::OnIceCandidate(const std::shared_ptr<http::svr::ws::WebSoc
 
 void WebRtcPublisher::OnStateChanged(IcePort &port, uint32_t session_id, IceConnectionState state, std::any user_data)
 {
-	logtt("IcePort OnStateChanged : %d", state);
+	logtt("IcePort OnStateChanged : %d", ov::ToUnderlyingType(state));
 
 	std::shared_ptr<RtcSession> session;
 	try

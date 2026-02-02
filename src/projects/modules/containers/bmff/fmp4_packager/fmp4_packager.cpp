@@ -160,7 +160,7 @@ namespace bmff
 	// Generate Media FMP4Segment
 	bool FMP4Packager::AppendSample(const std::shared_ptr<const MediaPacket> &media_packet)
 	{
-		logtt("MediaPacket : track(%d) pts(%lld), dts(%lld), duration(%lld), flag(%d), size(%d)", media_packet->GetTrackId(), media_packet->GetPts(), media_packet->GetDts(), media_packet->GetDuration(), media_packet->GetFlag(), media_packet->GetDataLength());
+		logtt("MediaPacket : track(%d) pts(%" PRId64 "), dts(%" PRId64 "), duration(%" PRId64 "), flag(%d), size(%zu)", media_packet->GetTrackId(), media_packet->GetPts(), media_packet->GetDts(), media_packet->GetDuration(), ov::ToUnderlyingType(media_packet->GetFlag()), media_packet->GetDataLength());
 
 		// Convert bitstream format
 		auto next_frame = ConvertBitstreamFormat(media_packet);

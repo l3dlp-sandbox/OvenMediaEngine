@@ -161,15 +161,15 @@ namespace mon::alrt
 
 				RETURN_DESCRIPTION(Code::INGRESS_BITRATE_LOW, "The ingress stream's current bitrate (%d bps) is lower than the configured bitrate (%d bps)", measured, config);
 				RETURN_DESCRIPTION(Code::INGRESS_BITRATE_HIGH, "The ingress stream's current bitrate (%d bps) is higher than the configured bitrate (%d bps)", measured, config);
-				RETURN_DESCRIPTION(Code::INGRESS_FRAMERATE_LOW, "The ingress stream's current framerate (%.2f fps) is lower than the configured framerate (%.2f fps)", measured, config);
-				RETURN_DESCRIPTION(Code::INGRESS_FRAMERATE_HIGH, "The ingress stream's current framerate (%f fps) is higher than the configured framerate (%f fps)", measured, config);
+				RETURN_DESCRIPTION(Code::INGRESS_FRAMERATE_LOW, "The ingress stream's current framerate (%.2f fps) is lower than the configured framerate (%.2f fps)", static_cast<double>(measured), static_cast<double>(config));
+				RETURN_DESCRIPTION(Code::INGRESS_FRAMERATE_HIGH, "The ingress stream's current framerate (%f fps) is higher than the configured framerate (%f fps)", static_cast<double>(measured), static_cast<double>(config));
 				RETURN_DESCRIPTION(Code::INGRESS_WIDTH_SMALL, "The ingress stream's width (%d) is smaller than the configured width (%d)", measured, config);
 				RETURN_DESCRIPTION(Code::INGRESS_WIDTH_LARGE, "The ingress stream's width (%d) is larger than the configured width (%d)", measured, config);
 				RETURN_DESCRIPTION(Code::INGRESS_HEIGHT_SMALL, "The ingress stream's height (%d) is smaller than the configured height (%d)", measured, config);
 				RETURN_DESCRIPTION(Code::INGRESS_HEIGHT_LARGE, "The ingress stream's height (%d) is larger than the configured height (%d)", measured, config);
 				RETURN_DESCRIPTION(Code::INGRESS_SAMPLERATE_LOW, "The ingress stream's current samplerate (%d) is lower than the configured samplerate (%d)", measured, config);
 				RETURN_DESCRIPTION(Code::INGRESS_SAMPLERATE_HIGH, "The ingress stream's current samplerate (%d) is higher than the configured samplerate (%d)", measured, config);
-				RETURN_DESCRIPTION(Code::INGRESS_LONG_KEY_FRAME_INTERVAL, "The ingress stream's current keyframe interval (%.1f seconds) is too long. Please use a keyframe interval of %.1f seconds or less", measured, config);
+				RETURN_DESCRIPTION(Code::INGRESS_LONG_KEY_FRAME_INTERVAL, "The ingress stream's current keyframe interval (%.1f seconds) is too long. Please use a keyframe interval of %.1f seconds or less", static_cast<double>(measured), static_cast<double>(config));
 				RETURN_DESCRIPTION(Code::INGRESS_HAS_BFRAME, "There are B-Frames in the ingress stream");
 
 				// Egress Codes

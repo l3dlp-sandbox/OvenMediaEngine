@@ -166,7 +166,7 @@ namespace bmff
 
 			if (read_stream.IsRemained(nal_length) == false)
 			{
-				logte("NAL length (%d) is greater than buffer length (%d)", nal_length, read_stream.Remained());
+				logte("NAL length (%zu) is greater than buffer length (%zu)", nal_length, read_stream.Remained());
 				return false;
 			}
 
@@ -195,7 +195,7 @@ namespace bmff
                     
 					sub_samples.emplace_back(clear_bytes, cipher_bytes);
 
-                    logtt("VCL NAL Unit Type : %d, Clear Bytes : %u, Protected Bytes : %u", nal_header.GetNalUnitType(), clear_bytes, cipher_bytes);
+                    logtt("VCL NAL Unit Type : %d, Clear Bytes : %u, Protected Bytes : %u", ov::ToUnderlyingType(nal_header.GetNalUnitType()), clear_bytes, cipher_bytes);
 
                     clear_bytes = 0;
                     cipher_bytes = 0;
@@ -206,7 +206,7 @@ namespace bmff
                     // it will be added to the subsample of VCL NAL Unit
 					clear_bytes += nal_length_size + nal_length;
 
-					logtt("NonVCL NAL Unit Type : %d, Clear Bytes : %u", nal_header.GetNalUnitType(), clear_bytes);
+					logtt("NonVCL NAL Unit Type : %d, Clear Bytes : %u", ov::ToUnderlyingType(nal_header.GetNalUnitType()), clear_bytes);
 				}
 			}
             else

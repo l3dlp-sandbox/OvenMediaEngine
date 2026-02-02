@@ -148,7 +148,7 @@ bool LLHlsChunklist::RemoveSegmentInfo(uint32_t segment_sequence)
 {
 	std::unique_lock<std::shared_mutex> lock(_segments_guard);
 
-	logtt("RemoveSegmentInfo[Track : %s/%s]: %lld", _track->GetPublicName().CStr(), _track->GetVariantName().CStr(), segment_sequence);
+	logtt("RemoveSegmentInfo[Track : %s/%s]: %u", _track->GetPublicName().CStr(), _track->GetVariantName().CStr(), segment_sequence);
 
 	if (_segments.empty())
 	{
@@ -158,7 +158,7 @@ bool LLHlsChunklist::RemoveSegmentInfo(uint32_t segment_sequence)
 	auto old_segment = _segments.begin()->second;
 	if (old_segment->GetSequence() != segment_sequence)
 	{
-		logtc("The sequence number of the segment to be deleted is not the first segment. segment(%lld) first(%lld)", segment_sequence, old_segment->GetSequence());
+		logtc("The sequence number of the segment to be deleted is not the first segment. segment(%u) first(%" PRId64 ")", segment_sequence, old_segment->GetSequence());
 		return false;
 	}
 

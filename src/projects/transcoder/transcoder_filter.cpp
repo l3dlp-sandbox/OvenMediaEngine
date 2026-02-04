@@ -176,10 +176,13 @@ bool TranscodeFilter::IsNeedUpdate(std::shared_ptr<MediaFrame> buffer)
 
 	// Check #1 - Abnormal timestamp
 	int64_t diff_timestamp = abs(curr_timestamp - last_timestamp);
-	bool is_abnormal = (last_timestamp != -1LL && diff_timestamp > _timestamp_jump_threshold) ? true : false;
+	bool is_abnormal	   = (last_timestamp != -1LL && diff_timestamp > _timestamp_jump_threshold) ? true : false;
 	if (is_abnormal)
 	{
-		logtw("Timestamp has changed unexpectedly. last:%lld, curr:%lld diff:%lld, expect:%lld", last_timestamp, buffer->GetPts(), diff_timestamp, _timestamp_jump_threshold);
+		logtw("[%s(%u)] Timestamp changed unexpectedly for track %u. last:%lld, curr:%lld, diff:%lld, threshold:%lld",
+			  _input_stream_info->GetUri().CStr(), _input_stream_info->GetId(),
+			  GetInputTrack()->GetId(), last_timestamp, curr_timestamp, diff_timestamp, _timestamp_jump_threshold);
+
 		return true;
 	}
 
@@ -191,8 +194,9 @@ bool TranscodeFilter::IsNeedUpdate(std::shared_ptr<MediaFrame> buffer)
 		if (buffer->GetWidth() != (int32_t)_internal->GetInputWidth() ||
 			buffer->GetHeight() != (int32_t)_internal->GetInputHeight())
 		{
-			logti("Changed input resolution of %u track. (%dx%d -> %dx%d)", 
-				GetInputTrack()->GetId(), _internal->GetInputWidth(), _internal->GetInputHeight(), buffer->GetWidth(), buffer->GetHeight());
+			logtw("[%s(%u)] Resolution changed for track %u. (%dx%d -> %dx%d)",
+				  _input_stream_info->GetUri().CStr(), _input_stream_info->GetId(),
+				  GetInputTrack()->GetId(), _internal->GetInputWidth(), _internal->GetInputHeight(), buffer->GetWidth(), buffer->GetHeight());
 
 			GetInputTrack()->SetWidth(buffer->GetWidth());
 			GetInputTrack()->SetHeight(buffer->GetHeight());
@@ -208,7 +212,8 @@ bool TranscodeFilter::IsNeedUpdate(std::shared_ptr<MediaFrame> buffer)
 		GetInputTrack()->GetCodecModuleId() == cmn::MediaCodecModuleId::XMA &&
 		GetOutputTrack()->GetCodecModuleId() == cmn::MediaCodecModuleId::XMA)
 	{
-		logtw("It is assumed that the XMA resource allocation failed. So, recreate the filter.");
+		logtw("[%s(%u)] It is assumed that the XMA resource allocation failed. So, recreate the filter.",
+			  _input_stream_info->GetUri().CStr(), _input_stream_info->GetId());
 
 		return true;
 	}

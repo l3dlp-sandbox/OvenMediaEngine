@@ -597,7 +597,7 @@ namespace pvd::rtmp
 				.Build());
 	}
 
-	const info::NamePath &RtmpChunkHandler::GetNamePath() const
+	info::NamePath RtmpChunkHandler::GetNamePath() const
 	{
 		return _stream->GetNamePath();
 	}

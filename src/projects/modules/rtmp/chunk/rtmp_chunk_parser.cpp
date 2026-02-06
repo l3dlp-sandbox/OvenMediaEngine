@@ -598,20 +598,18 @@ size_t RtmpChunkParser::GetMessageCount() const
 	return _message_queue.Size();
 }
 
-void RtmpChunkParser::UpdateQueueName()
+info::NamePath RtmpChunkParser::GetNamePath() const
 {
-	_message_queue.SetAlias(ov::String::FormatString("RTMP queue for %s", _name_path.CStr()));
-}
-
-const info::NamePath &RtmpChunkParser::GetNamePath() const
-{
+	std::lock_guard lock_guard(_name_path_mutex);
 	return _name_path;
 }
 
 void RtmpChunkParser::UpdateNamePath(const info::NamePath &stream_name_path)
 {
+	std::lock_guard lock_guard(_name_path_mutex);
+
 	_name_path = stream_name_path;
-	UpdateQueueName();
+	_message_queue.SetAlias(ov::String::FormatString("RTMP queue for %s", _name_path.CStr()));
 }
 
 void RtmpChunkParser::Destroy()

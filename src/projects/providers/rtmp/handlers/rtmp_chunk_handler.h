@@ -90,7 +90,7 @@ namespace pvd::rtmp
 		int32_t HandleData(const std::shared_ptr<const ov::Data> &data);
 
 		void UpdateQueueAlias();
-		const info::NamePath &GetNamePath() const;
+		info::NamePath GetNamePath() const;
 
 		int GetWaitingTrackCount() const;
 

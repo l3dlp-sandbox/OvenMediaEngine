@@ -28,7 +28,7 @@ namespace info
 
 		bool operator==(const Stream &stream_info) const;
 
-		const NamePath &GetNamePath() const;
+		NamePath GetNamePath() const;
 
 		void SetId(info::stream_id_t id);
 		info::stream_id_t GetId() const;
@@ -182,6 +182,7 @@ namespace info
 		bool _from_origin_map_store = false;
 
 	private:
+		mutable std::mutex _name_path_mutex;
 		NamePath _name_path;
 
 		std::chrono::system_clock::time_point _created_time;

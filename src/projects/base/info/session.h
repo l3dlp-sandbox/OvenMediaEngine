@@ -27,7 +27,7 @@ namespace info
 		session_id_t GetId() const;
 		ov::String GetUUID() const;
 
-		const NamePath &GetNamePath() const;
+		NamePath GetNamePath() const;
 
 		void SetName(const ov::String &name);
 		const std::optional<ov::String> &GetName() const;
@@ -63,6 +63,7 @@ namespace info
 		void SetIds(const info::Stream &stream);
 
 	private:
+		mutable std::mutex _name_path_mutex;
 		NamePath _name_path;
 
 		session_id_t _id;

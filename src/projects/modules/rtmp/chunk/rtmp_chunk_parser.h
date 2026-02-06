@@ -49,15 +49,13 @@ public:
 		_chunk_size = chunk_size;
 	}
 
-	const info::NamePath &GetNamePath() const;
+	info::NamePath GetNamePath() const;
 	void UpdateNamePath(const info::NamePath &stream_name_path);
 
 	void Destroy();
 
 private:
 	std::shared_ptr<const RtmpChunkHeader> GetPrecedingChunkHeader(const uint32_t chunk_stream_id);
-
-	void UpdateQueueName();
 
 	ParseResult ParseBasicHeader(ov::ByteStream &stream, RtmpChunkHeader *chunk_header);
 	ParseResultForExtendedTimestamp ParseExtendedTimestamp(
@@ -92,5 +90,6 @@ private:
 	ov::Queue<std::shared_ptr<const RtmpMessage>> _message_queue{nullptr, 500};
 	size_t _chunk_size;
 
+	mutable std::mutex _name_path_mutex;
 	info::NamePath _name_path;
 };

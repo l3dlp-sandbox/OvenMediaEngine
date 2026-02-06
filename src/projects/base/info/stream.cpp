@@ -43,8 +43,8 @@ namespace info
 
 	Stream::Stream(const Stream &stream)
 	{
-		_name_path = stream._name_path;
-
+		_name_path = stream.GetNamePath();
+		
 		_id = stream._id;
 		_name = stream._name;
 		_source_type = stream._source_type;
@@ -95,8 +95,9 @@ namespace info
 		return false;
 	}
 
-	const NamePath &Stream::GetNamePath() const
+	NamePath Stream::GetNamePath() const
 	{
+		std::lock_guard lock_guard(_name_path_mutex);
 		return _name_path;
 	}
 
@@ -140,6 +141,7 @@ namespace info
 
 	void Stream::UpdateNamePath(const info::VHostAppName &vhost_app_name)
 	{
+		std::lock_guard lock_guard(_name_path_mutex);
 		_name_path = vhost_app_name.GetNamePath().Append(GetName().CStr(), _id);
 	}
 

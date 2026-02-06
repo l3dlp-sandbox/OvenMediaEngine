@@ -35,7 +35,7 @@ namespace info
 			va_end(args);
 		}
 
-		void Append(const char *format, ...)
+		NamePath &Append(const char *format, ...)
 		{
 			va_list args;
 			va_start(args, format);
@@ -49,6 +49,8 @@ namespace info
 			_hash = _name_path.Hash();
 
 			va_end(args);
+
+			return *this;
 		}
 
 		NamePath Append(const char *format, ...) const

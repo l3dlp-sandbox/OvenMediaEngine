@@ -62,11 +62,16 @@ namespace info
 			return;
 		}
 
-		_name_path = _stream_info->GetNamePath().Append("%s(%u)", _name.value_or("[unnamed]").CStr(), _id);
+		auto name_path = _stream_info->GetNamePath().Append("%s(%u)", _name.value_or("[unnamed]").CStr(), _id);
+		{
+			std::lock_guard lock_guard(_name_path_mutex);
+			_name_path = name_path;
+		}
 	}
 
-	const NamePath &Session::GetNamePath() const
+	NamePath Session::GetNamePath() const
 	{
+		std::lock_guard lock_guard(_name_path_mutex);
 		return _name_path;
 	}
 

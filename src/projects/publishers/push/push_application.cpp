@@ -256,7 +256,7 @@ namespace pub
 		auto session_state = session->GetState();
 		if (prev_session_state != session_state)
 		{
-			logtt("Changed push state. (%d - %d)", prev_session_state, session_state);
+			logtt("Changed push state. (%d - %d)", ov::ToUnderlyingType(prev_session_state), ov::ToUnderlyingType(session_state));
 		}
 	}
 
@@ -283,7 +283,7 @@ namespace pub
 		auto session_state = session->GetState();
 		if (prev_session_state != session_state)
 		{
-			logtt("Changed push state. (%d - %d)", prev_session_state, session_state);
+			logtt("Changed push state. (%d - %d)", ov::ToUnderlyingType(prev_session_state), ov::ToUnderlyingType(session_state));
 		}
 	}
 

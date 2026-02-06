@@ -511,7 +511,7 @@ namespace pvd
 			_start_timestamp_us = Rescale(dts, us_scale, track_scale);
 
 			// for debugging
-			logtt("[%s/%s(%d)] Get start timestamp of stream. track:%u, ts:%lld (%lld/%lld) (%lld us)",
+			logtt("[%s/%s(%d)] Get start timestamp of stream. track:%u, ts:%" PRId64 " (%" PRId64 "/%" PRId64 ") (%" PRId64 " us)",
 				  _application->GetVHostAppName().CStr(), GetName().CStr(), GetId(),
 				  track_id,
 				  dts, num_tb, den_tb,

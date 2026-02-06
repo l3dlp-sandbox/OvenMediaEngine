@@ -120,7 +120,7 @@ namespace pub
 		auto next_session_state = session->GetState();
 		if (session_state != next_session_state)
 		{
-			logtt("Changed State. State(%d - %d)", session_state, next_session_state);
+			logtt("Changed State. State(%d - %d)", ov::ToUnderlyingType(session_state), ov::ToUnderlyingType(next_session_state));
 		}
 	}
 
@@ -141,7 +141,7 @@ namespace pub
 		auto next_session_state = session->GetState();
 		if (session_state != next_session_state)
 		{
-			logtt("Changed State. State(%d - %d)", session_state, next_session_state);
+			logtt("Changed State. State(%d - %d)", ov::ToUnderlyingType(session_state), ov::ToUnderlyingType(next_session_state));
 		}
 	}
 

@@ -402,7 +402,7 @@ static void SigIntHandler(int signum, siginfo_t *si, void *unused)
 
 	if (signal_count == TERMINATE_COUNT)
 	{
-		logtc("The termination request has been made %d times. OME is forcibly terminated.", TERMINATE_COUNT, signum);
+		logtc("The termination request has been made %d times by signal %d. OME is forcibly terminated.", TERMINATE_COUNT, signum);
 		::exit(1);
 	}
 	else

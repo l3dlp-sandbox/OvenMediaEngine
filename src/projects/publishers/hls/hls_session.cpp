@@ -97,7 +97,7 @@ void HlsSession::UpdateLastRequest(uint32_t connection_id)
 	std::lock_guard<std::shared_mutex> lock(_last_request_time_guard);
 	_last_request_time[connection_id] = ov::Clock::NowMSec();
 
-	logtt("TsSession(%u) : Request updated from %u : size(%d)", GetId(), connection_id, _last_request_time.size());
+	logtt("TsSession(%u) : Request updated from %u : size(%zu)", GetId(), connection_id, _last_request_time.size());
 }
 
 uint64_t HlsSession::GetLastRequestTime(uint32_t connection_id) const

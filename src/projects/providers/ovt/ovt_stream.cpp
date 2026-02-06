@@ -418,7 +418,7 @@ namespace pvd
 				!json_track["bitrate"].isUInt() ||
 				!json_track["startFrameTime"].isUInt64() || !json_track["lastFrameTime"].isUInt64())
 			{
-				logte("Invalid json track [%d]", i);
+				logte("Invalid json track [%zu]", i);
 				return false;
 			}
 
@@ -711,7 +711,7 @@ namespace pvd
 				media_packet->SetDts(dts);
 				media_packet->SetDuration(-1); // Duration should be set by MediaRouter again due to the AdjustTimestampByBase
 
-				logtt("[%s/%s(%u)] ProcessMediaPacket : TrackId(%d) ORI_PTS(%lld) PTS(%lld) ORI_DTS(%lld) DTS(%lld) Size(%zu) MSID(%u)",
+				logtt("[%s/%s(%u)] ProcessMediaPacket : TrackId(%d) ORI_PTS(%" PRId64 ") PTS(%" PRId64 ") ORI_DTS(%" PRId64 ") DTS(%" PRId64 ") Size(%zu) MSID(%u)",
 					  GetApplicationInfo().GetVHostAppName().CStr(), GetName().CStr(), GetId(),
 					  media_packet->GetTrackId(), old_pts, media_packet->GetPts(), old_dts, media_packet->GetDts(), media_packet->GetDataLength(), GetMsid());
 

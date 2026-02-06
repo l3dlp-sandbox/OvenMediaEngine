@@ -980,7 +980,7 @@ namespace ocst
 			}
 		}
 
-		logtw("Provider (%d) is not found for scheme %s", type, scheme.CStr());
+		logtw("Provider (%d) is not found for scheme %s", ov::ToUnderlyingType(type), scheme.CStr());
 		return nullptr;
 	}
 
@@ -991,7 +991,7 @@ namespace ocst
 
 		OV_ASSERT((provider == nullptr) || (provider_module != nullptr),
 				  "Provider (%d) must inherit from ProviderModuleInterface",
-				  provider->GetProviderType());
+				  ov::ToUnderlyingType(provider->GetProviderType()));
 
 		return provider_module;
 	}

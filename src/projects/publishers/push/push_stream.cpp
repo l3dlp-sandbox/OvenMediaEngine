@@ -49,7 +49,7 @@ namespace pub
 			return false;
 		}
 
-		logtt("PushStream(%ld) has been started", GetId());
+		logtt("PushStream(%u) has been started", GetId());
 
 		return Stream::Start();
 	}

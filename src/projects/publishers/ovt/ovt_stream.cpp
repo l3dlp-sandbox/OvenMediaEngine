@@ -255,7 +255,7 @@ bool OvtStream::RemoveSessionByConnectorId(int connector_id)
 {
 	auto sessions = GetAllSessions();
 
-	logtt("RemoveSessionByConnectorId : all(%d) connector(%d)", sessions.size(), connector_id);
+	logtt("RemoveSessionByConnectorId : all(%zu) connector(%d)", sessions.size(), connector_id);
 
 	for(const auto &item : sessions)
 	{

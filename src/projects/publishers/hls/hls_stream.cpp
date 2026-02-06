@@ -275,7 +275,7 @@ void HlsStream::BufferMediaPacketUntilReadyToPlay(const std::shared_ptr<MediaPac
 
 bool HlsStream::SendBufferedPackets()
 {
-	logtt("SendBufferedPackets - BufferSize (%u)", _initial_media_packet_buffer.Size());
+	logtt("SendBufferedPackets - BufferSize (%zu)", _initial_media_packet_buffer.Size());
 	while (_initial_media_packet_buffer.IsEmpty() == false)
 	{
 		auto buffered_media_packet = _initial_media_packet_buffer.Dequeue();
@@ -394,7 +394,7 @@ void HlsStream::SendDataFrame(const std::shared_ptr<MediaPacket> &media_packet)
 			auto result = packager->InsertMarker(marker);
 			if (result == false)
 			{
-				logte("Failed to insert marker (timestamp: %lld, tag: %s)", marker->GetTimestamp(), marker->GetTag().CStr());
+				logte("Failed to insert marker (timestamp: %" PRIu64 ", tag: %s)", marker->GetTimestamp(), marker->GetTag().CStr());
 			}
 		}
 

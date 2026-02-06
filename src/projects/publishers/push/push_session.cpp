@@ -367,13 +367,13 @@ namespace pub
 
 		if (IsSupportTrack(GetPush()->GetProtocolType(), track) == false)
 		{
-			logtw("Could not supported track. trackId:%d, codecId: %d", track->GetId(), track->GetCodecId());
+			logtw("Could not supported track. trackId:%u, codecId: %d", track->GetId(), ov::ToUnderlyingType(track->GetCodecId()));
 			return false;
 		}
 
 		if (IsSupportCodec(GetPush()->GetProtocolType(), track->GetCodecId()) == false)
 		{
-			logtw("Could not supported codec. trackId:%d, codecId: %d", track->GetId(), track->GetCodecId());
+			logtw("Could not supported codec. trackId:%u, codecId: %d", track->GetId(), ov::ToUnderlyingType(track->GetCodecId()));
 			return false;
 		}
 

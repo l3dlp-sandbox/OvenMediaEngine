@@ -27,7 +27,7 @@ ThumbnailStream::~ThumbnailStream()
 
 bool ThumbnailStream::Start()
 {
-	logtt("ThumbnailStream(%ld) has been started", GetId());
+	logtt("ThumbnailStream(%u) has been started", GetId());
 
 	if (GetState() != Stream::State::CREATED)
 	{

@@ -71,7 +71,7 @@ namespace pub
 			session->Stop();
 		}
 		_sessions.clear();
-		logtt("All sessions(%d) of %s has been stopped successfully", _sessions.size(), worker_name.CStr());
+		logtt("All sessions(%zu) of %s has been stopped successfully", _sessions.size(), worker_name.CStr());
 
 		return true;
 	}
@@ -297,7 +297,7 @@ namespace pub
 
 		std::lock_guard<std::shared_mutex> session_lock(_session_map_mutex);
 
-		logti("[%s(%u)] %s - Try to stop all sessions (%d)", GetName().CStr(), GetId(), GetApplicationTypeName(), _sessions.size());
+		logti("[%s(%u)] %s - Try to stop all sessions (%zu)", GetName().CStr(), GetId(), GetApplicationTypeName(), _sessions.size());
 
 		for(const auto &x : _sessions)
 		{
@@ -401,7 +401,7 @@ namespace pub
 		size_t worker_id = session_id % _worker_count;
 		if(worker_id >= _stream_workers.size())
 		{
-			logtw("Invalid worker id : %d", worker_id);
+			logtw("Invalid worker id : %zu", worker_id);
 			return nullptr;
 		}
 

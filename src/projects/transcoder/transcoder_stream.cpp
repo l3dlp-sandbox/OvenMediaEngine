@@ -362,19 +362,27 @@ bool TranscoderStream::PrepareInternal()
 bool TranscoderStream::UpdateInternal(const std::shared_ptr<info::Stream> &stream)
 {
 	logtd("%s Trying to update a stream", _log_prefix.CStr());
+
 	if (CanSeamlessTransition(stream) == true)
 	{
 		logtt("%s This stream support seamless transitions", _log_prefix.CStr());
+
 		FlushBuffers();
 
-		// Restrict transcoding while all decoders/filters/encoders are being generated
-		std::unique_lock<std::shared_mutex> pipeline_lock(_pipeline_mutex);
-		RemoveDecoders();
-		RemoveFilters();
-		RemoveSpecificEncoders();
+		{
+			// Restrict transcoding while all decoders/filters/encoders are being generated
+			std::unique_lock<std::shared_mutex> pipeline_lock(_pipeline_mutex);
 
-		CreateDecoders();
-		pipeline_lock.unlock();
+			// For tracks created as bypass, update the track data to match the input track.
+			UpdatePassthroughOutputTracks(stream);
+
+			RemoveDecoders();
+			RemoveFilters();
+			RemoveSpecificEncoders();
+
+			CreateDecoders();
+		}
+
 		logti("%s stream has been updated", _log_prefix.CStr());
 	}
 	else
@@ -382,18 +390,25 @@ bool TranscoderStream::UpdateInternal(const std::shared_ptr<info::Stream> &strea
 		logtw("%s This stream does not support seamless transitions. Renewing all", _log_prefix.CStr());
 
 		FlushBuffers();
+	
+		{
+			// Restrict transcoding while all decoders/filters/encoders are being generated			
+			std::unique_lock<std::shared_mutex> pipeline_lock(_pipeline_mutex);
 
-		// Restrict transcoding while all decoders/filters/encoders are being generated
-		std::unique_lock<std::shared_mutex> pipeline_lock(_pipeline_mutex);
-		RemoveDecoders();
-		RemoveFilters();
-		RemoveEncoders();
+			// When the entire stream is changed, update the MSID.
+			UpdateMsidOfOutputStreams(stream->GetMsid());
+			// For tracks created as bypass, update the track data to match the input track.
+			UpdatePassthroughOutputTracks(stream);
 
-		CreateDecoders();
-		pipeline_lock.unlock();
+			RemoveDecoders();
+			RemoveFilters();
+			RemoveEncoders();
+
+			CreateDecoders();
+		}
+
 		logti("%s stream has been updated", _log_prefix.CStr());
 
-		UpdateMsidOfOutputStreams(stream->GetMsid());
 		NotifyUpdateStreams();
 
 		StoreTracks(stream);
@@ -1583,11 +1598,31 @@ void TranscoderStream::UpdateOutputTrack(std::shared_ptr<MediaFrame> buffer)
 
 		if (output_track->IsBypass())
 		{
-			UpdateOutputTrackPassthrough(output_track, buffer);
+			logtw("%s Invalid output track. Bypass track cannot be connected to decoder. OutputTrack(%d)", _log_prefix.CStr(), output_track->GetId());
+			continue;
 		}
-		else
+
+		UpdateOutputTrackByDecodedFrame(output_track, input_track, buffer);
+	}
+}
+
+void TranscoderStream::UpdatePassthroughOutputTracks(const std::shared_ptr<info::Stream> &stream)
+{
+	for (auto it : stream->GetTracks())
+	{
+		for (auto &[input_stream, input_track, output_stream, output_track] : _composite.GetBypassOutputListByInputTrackId(it.first))
 		{
-			UpdateOutputTrackByDecodedFrame(output_track, input_track, buffer);
+			UNUSED_VARIABLE(input_stream);
+			UNUSED_VARIABLE(input_track);
+			UNUSED_VARIABLE(output_stream);
+
+			if (output_track->IsBypass() == false)
+			{
+				logtw("%s Invalid output track. Only bypass track can be updated. OutputTrack(%d)", _log_prefix.CStr(), output_track->GetId());
+				continue;
+			}
+
+			UpdateOutputTrackPassthrough(output_track, input_track);
 		}
 	}
 }

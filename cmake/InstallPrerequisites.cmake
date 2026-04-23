@@ -367,7 +367,7 @@ make ${_J} && sudo make install && rm -rf ${TEMP_PATH}/x264
 set(_install_nvcc_hdr "
 mkdir -p ${TEMP_PATH}/nvcc-hdr && cd ${TEMP_PATH}/nvcc-hdr &&
 curl -sSLf ${NVCC_HDR_SOURCE_URL} | tar -xz --strip-components=1 &&
-sed -i 's|PREFIX.*=\\(.*\\)|PREFIX = ${PREFIX}|g' Makefile && sudo make install
+sudo make PREFIX="${PREFIX}" LIBDIR=lib install
 ")
 
 # ---- FFmpeg ----
@@ -507,7 +507,7 @@ make ${_J} && sudo make install && rm -rf ${TEMP_PATH}/pcre2
 set(_install_hiredis "
 mkdir -p ${TEMP_PATH}/hiredis && cd ${TEMP_PATH}/hiredis &&
 curl -sSLf ${HIREDIS_SOURCE_URL} | tar -xz --strip-components=1 &&
-make ${_J} PREFIX=${PREFIX} && sudo make install PREFIX=${PREFIX} && rm -rf ${TEMP_PATH}/hiredis
+make ${_J} PREFIX=${PREFIX} LIBRARY_PATH=lib && sudo make install PREFIX=${PREFIX} LIBRARY_PATH=lib && rm -rf ${TEMP_PATH}/hiredis
 ")
 
 # ---- spdlog ----

@@ -254,7 +254,7 @@ Or by **activating the encoding options** in OvenMediaEngine.
 
 :::info
 
-Setting up Transcoding options in OvenMediaEngine: [https://docs.ovenmediaengine.com/transcoding#encodes](https://docs.ovenmediaengine.com/transcoding#encodes)
+Setting up Transcoding options in OvenMediaEngine: [transcoding/README.md#encodes](transcoding/README.md#encodes)
 
 :::
 
@@ -268,7 +268,7 @@ If you want to monitor packet loss in your Chrome browser, you can access it by 
 
 :::info
 
-Setting up WebRTC over TCP in OvenMediaEngine: [https://docs.ovenmediaengine.com/streaming/webrtc-publishing#webrtc-over-tcp](https://docs.ovenmediaengine.com/streaming/webrtc-publishing#webrtc-over-tcp)
+Setting up WebRTC over TCP in OvenMediaEngine: [streaming/webrtc-publishing.md#webrtc-over-tcp](streaming/webrtc-publishing.md#webrtc-over-tcp)
 
 :::
 
@@ -284,7 +284,7 @@ When you see Origin is CPU intensive on your Origin-Edge structure, the transcod
 
 :::info
 
-Setting up GPU Acceleration in OvenMediaEngine: [https://docs.ovenmediaengine.com/transcoding/gpu-usage](https://docs.ovenmediaengine.com/transcoding/gpu-usage)
+Setting up GPU Acceleration in OvenMediaEngine: [transcoding/gpu-usage.md](transcoding/gpu-usage.md)
 
 :::
 
@@ -302,7 +302,7 @@ When you see a specific thread overuses the CPU, the video may not stream smooth
 
 :::info
 
-Tuning OvenMediaEngine Performance: [https://docs.ovenmediaengine.com/performance-tuning#performance-tuning](https://docs.ovenmediaengine.com/performance-tuning#performance-tuning)
+Tuning OvenMediaEngine Performance: [performance-tuning.md#performance-tuning](performance-tuning.md#performance-tuning)
 
 :::
 
@@ -359,7 +359,7 @@ In this case, you can solve this by installing a certificate in OvenMediaEngine 
 
 :::info
 
-Setting up TLS Encryption in OvenMediaEngine: [https://docs.ovenmediaengine.com/streaming/tls-encryption](https://docs.ovenmediaengine.com/streaming/tls-encryption)
+Setting up TLS Encryption in OvenMediaEngine: [configuration/tls-encryption.md](configuration/tls-encryption.md)
 
 :::
 
@@ -393,7 +393,7 @@ Or by **enabling the encoding options** in OvenMediaEngine.
 
 :::info
 
-Setting up Transcoding options in OvenMediaEngine: [https://docs.ovenmediaengine.com/transcoding#encodes](https://docs.ovenmediaengine.com/transcoding#encodes)
+Setting up Transcoding options in OvenMediaEngine: [transcoding/README.md#encodes](transcoding/README.md#encodes)
 
 :::
 
@@ -413,7 +413,7 @@ Also, suppose you are using a transcoder in OvenMediaEngine and trying to input 
 
 :::info
 
-Setting up WebRTC JitterBuffer in OvenMediaEngine: [https://docs.ovenmediaengine.com/streaming/webrtc-publishing#publisher](https://docs.ovenmediaengine.com/streaming/webrtc-publishing#publisher)
+Setting up WebRTC JitterBuffer in OvenMediaEngine: [streaming/webrtc-publishing.md#publisher](streaming/webrtc-publishing.md#publisher)
 
 :::
 
@@ -425,7 +425,7 @@ There may be cases where the A/V sync is not corrected even after a certain amou
 
 :::info
 
-Setting up WebRTC JitterBuffer in OvenMediaEngine: [https://docs.ovenmediaengine.com/streaming/webrtc-publishing#publisher](https://docs.ovenmediaengine.com/streaming/webrtc-publishing#publisher)
+Setting up WebRTC JitterBuffer in OvenMediaEngine: [streaming/webrtc-publishing.md#publisher](streaming/webrtc-publishing.md#publisher)
 
 :::
 
@@ -443,7 +443,7 @@ WebRTC supports Opus, not AAC, as an audio codec. Because RTMP and other protoco
 
 :::info
 
-Setting up Opus Codec in OvenMediaEngine: [https://docs.ovenmediaengine.com/transcoding#audio](https://docs.ovenmediaengine.com/transcoding#audio)
+Setting up Opus Codec in OvenMediaEngine: [transcoding/README.md#audio](transcoding/README.md#audio)
 
 :::
 
@@ -459,7 +459,7 @@ However, since OvenMediaEngine has the default to the fastest encoding option fo
 
 :::info
 
-Choosing an Encoding Preset in OvenMediaEngine: [https://docs.ovenmediaengine.com/transcoding#video](https://docs.ovenmediaengine.com/transcoding#video)
+Choosing an Encoding Preset in OvenMediaEngine: [transcoding/README.md#video](transcoding/README.md#video)
 
 :::
 

@@ -18,6 +18,7 @@
 #   -DOME_NILOGAN_XCODER_COMPILE_PATH=<path>  Path to xcoder_logan source to compile (optional)
 #   -DOME_ENABLE_X264=ON                   Enable libx264 (default ON)
 #   -DOME_USE_CLANG=ON                     Install clang/lld and use as compiler (default ON)
+#   -DOME_WHISPER_STATIC=ON                Build Whisper as a static library (default OFF)
 #   -DTARGET=<name>                        Install only this target
 #
 # Example:
@@ -312,7 +313,7 @@ mkdir -p ${TEMP_PATH}/srt && cd ${TEMP_PATH}/srt &&
 curl -sSLf ${SRT_SOURCE_URL} | tar -xz --strip-components=1 &&
 cmake -S . -B build -DCMAKE_INSTALL_PREFIX=${PREFIX} -DENABLE_SHARED=1 -DENABLE_STATIC=0 -DCMAKE_POLICY_VERSION_MINIMUM=3.5 &&
 cmake --build build ${_J} &&
-sudo cmake --install build && rm -rf ${TEMP_PATH}/srt
+sudo cmake --install build --prefix ${PREFIX} && rm -rf ${TEMP_PATH}/srt
 ")
 
 # ---- Opus ----
@@ -520,24 +521,34 @@ make ${_J} && sudo make install && rm -rf ${TEMP_PATH}/spdlog
 ")
 
 # ---- whisper.cpp ----
-set(_WHISPER_CUDA 0)
+set(_WHISPER_CUDA "OFF")
 if(ENABLE_NVIDIA)
-    set(_WHISPER_CUDA 1)
+    set(_WHISPER_CUDA "ON")
+endif()
+set(_BUILD_SHARED_LIBS "ON")
+set(_GGML_STATIC "OFF")
+if(OME_WHISPER_STATIC)
+    message(STATUS "[OME] Building Whisper/ggml as a static library")
+    set(_BUILD_SHARED_LIBS "OFF")
+    set(_GGML_STATIC "ON")
 endif()
 set(_WHISPER_CMAKE_ARGS
     "cmake -B build -S ."
     "-DCMAKE_BUILD_TYPE=Release"
     "-DCMAKE_INSTALL_PREFIX=${PREFIX}"
     "-DCMAKE_INSTALL_RPATH=${PREFIX}/lib"
-    "-DBUILD_SHARED_LIBS=ON"
+    "-DBUILD_SHARED_LIBS=${_BUILD_SHARED_LIBS}"
     "-DWHISPER_BUILD_EXAMPLES=OFF"
     "-DWHISPER_BUILD_TESTS=OFF"
     "-DWHISPER_BUILD_SERVER=OFF"
     "-DGGML_CUDA=${_WHISPER_CUDA}"
+    "-DGGML_STATIC=${_GGML_STATIC}"
+    "-DGGML_CUDA_FA_ALL_QUANTS=OFF"
+    "-DGGML_CUDA_GRAPHS=OFF"
     "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
 )
 if(OME_HWACCEL_NVIDIA)
-    list(APPEND _WHISPER_CMAKE_ARGS "\"-DCMAKE_CUDA_ARCHITECTURES=61\;75\;80\;86\;89\"")
+    list(APPEND _WHISPER_CMAKE_ARGS "\"-DCMAKE_CUDA_ARCHITECTURES=61-real\;70-real\;75-real\;80-real\;86-real\;89\"")
     find_program(_OME_NVCC nvcc HINTS /usr/local/cuda/bin /usr/cuda/bin)
     if(_OME_NVCC)
         list(APPEND _WHISPER_CMAKE_ARGS "-DCMAKE_CUDA_COMPILER=${_OME_NVCC}")

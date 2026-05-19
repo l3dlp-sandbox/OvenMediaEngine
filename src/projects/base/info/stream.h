@@ -67,7 +67,6 @@ namespace info
 		const std::chrono::system_clock::time_point &GetInputStreamPublishedTime() const;
 		const std::chrono::system_clock::time_point &GetPublishedTime() const;
 
-		uint32_t GetUptimeSec();
 		StreamSourceType GetSourceType() const;
 		ProviderType GetProviderType() const;
 		

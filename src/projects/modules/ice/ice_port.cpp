@@ -420,21 +420,30 @@ bool IcePort::RemoveSession(session_id_t session_id)
 		ice_sessions_with_ufrag_size = _ice_sessions_with_ufrag.size();
 	}
 
-	// Remove from _ice_sessions_with_address_pair if it exists
+	// Erase every pair registered for this session, not just the connected one
 	{
 		std::lock_guard<std::shared_mutex> lock_guard(_ice_sessions_with_address_pair_lock);
-		auto connected_candidate_pair = ice_session->GetConnectedCandidatePair();
-		if (connected_candidate_pair != nullptr)
+		for (auto it = _ice_sessions_with_address_pair.begin(); it != _ice_sessions_with_address_pair.end();)
 		{
-			_ice_sessions_with_address_pair.erase(connected_candidate_pair->GetAddressPair());
+			if (it->second == ice_session)
+			{
+				it = _ice_sessions_with_address_pair.erase(it);
+			}
+			else
+			{
+				++it;
+			}
 		}
 		ice_sessions_with_address_pair_size = _ice_sessions_with_address_pair.size();
 	}
 
 	{
-		// Close only TCP (TURN)
-		auto remote = ice_session->GetConnectedSocket();
-		if (remote != nullptr)
+		// Close every per-connection socket this session owns, not just the
+		// active one. With multi-pair switching the active pair may be UDP
+		// while the session still holds TURN-over-TCP / direct-TCP sockets
+		// from earlier path switches; those would otherwise leak. Only TCP is
+		// closed here: the UDP socket is the process-wide shared listener.
+		for (const auto &remote : ice_session->GetCandidatePairSockets())
 		{
 			if (remote->GetSocket().GetType() == ov::SocketType::Tcp)
 			{
@@ -528,18 +537,18 @@ void IcePort::CheckTimedOut()
 	{
 		RemoveSession(terminated_session->GetSessionID());
 
-		auto connected_candidate_pair = terminated_session->GetConnectedCandidatePair();
+		auto active_candidate_pair = terminated_session->GetActiveCandidatePair();
 
 		if (terminated_session->IsExpired())
 		{
 			terminated_session->SetState(IceConnectionState::Disconnected);
 
-			logtw("Agent [%s, %u] has expired", connected_candidate_pair != nullptr ? connected_candidate_pair->ToString().CStr() : "Unknow", terminated_session->GetSessionID());
+			logtw("Agent [%s, %u] has expired", active_candidate_pair != nullptr ? active_candidate_pair->ToString().CStr() : "Unknown", terminated_session->GetSessionID());
 		}
 		else
 		{
 			terminated_session->SetState(IceConnectionState::Closed);
-			logti("Agent [%s, %u] has closed", connected_candidate_pair != nullptr ? connected_candidate_pair->ToString().CStr() : "Unknow", terminated_session->GetSessionID());
+			logti("Agent [%s, %u] has closed", active_candidate_pair != nullptr ? active_candidate_pair->ToString().CStr() : "Unknown", terminated_session->GetSessionID());
 		}
 
 		NotifyIceSessionStateChanged(terminated_session);
@@ -565,12 +574,24 @@ bool IcePort::Send(session_id_t session_id, const std::shared_ptr<const ov::Data
 		return false;
 	}
 
+	// Resolve the active pair once and frame the packet for THAT pair. The
+	// framing must follow the active pair, not the session: a session may hold
+	// a TURN-relayed pair and a direct pair at the same time and switch between
+	// them, so a session-global TURN flag would keep TURN-wrapping after a
+	// switch to a direct pair (the peer then drops every packet).
+	auto active_candidate_pair = ice_session->GetActiveCandidatePair();
+	if (active_candidate_pair == nullptr)
+	{
+		logte("IcePort::Send - No active candidate pair: %u", session_id);
+		return false;
+	}
+
 	// The underlying socket may already be closed (e.g. by GC) before OnDisconnected callback arrives.
 	// Check socket state to avoid sending data to a closed socket.
-	auto remote = ice_session->GetConnectedSocket();
+	auto remote = active_candidate_pair->GetSocket();
 	if (remote == nullptr)
 	{
-		logte("IcePort::Send - Could not find connected remote socket: %u", session_id);
+		logte("IcePort::Send - Active candidate pair has no socket: %u", session_id);
 		return false;
 	}
 
@@ -583,28 +604,31 @@ bool IcePort::Send(session_id_t session_id, const std::shared_ptr<const ov::Data
 
 	std::shared_ptr<const ov::Data> send_data = nullptr;
 
-	// Send throutgh TURN server Data Channel proxy
-	if (ice_session->IsTurnClient() == true && ice_session->IsDataChannelEnabled() == true)
+	switch (active_candidate_pair->GetTransportType())
 	{
-		send_data = CreateChannelDataMessage(ice_session->GetDataChannelNumber(), data);
-	}
-	// Send thourgh TURN server Data Indication proxy
-	else if (ice_session->IsTurnClient() == true && ice_session->IsDataChannelEnabled() == false)
-	{
-		send_data = CreateDataIndication(ice_session->GetTurnPeerAddress(), data);
-	}
-	// Send direct
-	else
-	{
-		// For direct TCP ICE candidate connections (RFC 6544), wrap in RFC 4571 framing.
-		if (remote->GetType() == ov::SocketType::Tcp && IsIceTcpCandidatePort(remote->GetLocalAddress()->Port()))
-		{
-			send_data = CreateRfc4571Frame(data);
-		}
-		else
-		{
-			send_data = data;
-		}
+		// Send through TURN server Data Channel proxy
+		case IceCandidatePair::TransportType::TurnDataChannel:
+			send_data = CreateChannelDataMessage(active_candidate_pair->GetTurnChannelNumber(), data);
+			break;
+
+		// Send through TURN server Send Indication proxy
+		case IceCandidatePair::TransportType::TurnSendIndication:
+			send_data = CreateDataIndication(active_candidate_pair->GetTurnPeerAddress(), data);
+			break;
+
+		// Send direct
+		case IceCandidatePair::TransportType::Direct:
+		default:
+			// For direct TCP ICE candidate connections (RFC 6544), wrap in RFC 4571 framing.
+			if (remote->GetType() == ov::SocketType::Tcp && IsIceTcpCandidatePort(remote->GetLocalAddress()->Port()))
+			{
+				send_data = CreateRfc4571Frame(data);
+			}
+			else
+			{
+				send_data = data;
+			}
+			break;
 	}
 
 	if (send_data == nullptr)
@@ -612,14 +636,7 @@ bool IcePort::Send(session_id_t session_id, const std::shared_ptr<const ov::Data
 		return false;
 	}
 
-	// TODO(Getroot) : Change to use Local / Remote address of candidate pair
-	auto connected_candidate_pair = ice_session->GetConnectedCandidatePair();
-	if (connected_candidate_pair == nullptr)
-	{
-		return false;
-	}
-
-	return remote->SendFromTo(connected_candidate_pair->GetAddressPair(), send_data);
+	return remote->SendFromTo(active_candidate_pair->GetAddressPair(), send_data);
 }
 
 void IcePort::OnConnected(const std::shared_ptr<ov::Socket> &remote)
@@ -675,8 +692,8 @@ void IcePort::OnDisconnected(const std::shared_ptr<ov::Socket> &remote, Physical
 		std::shared_lock<std::shared_mutex> lock_guard(_ice_sessions_with_id_lock);
 		for (const auto &[session_id, ice_session] : _ice_seesions_with_id)
 		{
-			auto connected_socket = ice_session->GetConnectedSocket();
-			if (connected_socket != nullptr && connected_socket->GetNativeHandle() == remote->GetNativeHandle())
+			auto active_socket = ice_session->GetActiveSocket();
+			if (active_socket != nullptr && active_socket->GetNativeHandle() == remote->GetNativeHandle())
 			{
 				sessions_to_disconnect.push_back(session_id);
 			}
@@ -759,12 +776,23 @@ void IcePort::OnApplicationPacketReceived(const std::shared_ptr<ov::Socket> &rem
 		return;
 	}
 
-	// When the candidate pair is determined, the peer starts sending DTLS messages. This can be seen as a true connected.
-	if (ice_session->GetState() != IceConnectionState::Connected)
+	// An application packet on a pair other than the active one means the
+	// client switched its candidate pair, so we switch too.
+	// SelectActiveCandidatePair() also makes this pair the one we send on.
+	if (ice_session->IsActive(address_pair) == false)
 	{
-		// If the peer is not connected, it is not a valid packet.
-		logtw("Received application packet from invalid peer(%s). Dropping...", address_pair.ToString().CStr());
-		return;
+		auto old_state = ice_session->GetState();
+		if (ice_session->SelectActiveCandidatePair(address_pair) == false)
+		{
+			// Not a STUN-validated pair, so not a trusted path
+			logtw("Received application packet from invalid peer(%s). Dropping...", address_pair.ToString().CStr());
+			return;
+		}
+
+		if (old_state != ice_session->GetState())
+		{
+			NotifyIceSessionStateChanged(ice_session);
+		}
 	}
 
 	if (ice_session->GetObserver() != nullptr)
@@ -790,14 +818,12 @@ void IcePort::OnChannelDataPacketReceived(const std::shared_ptr<ov::Socket> &rem
 	application_gate_info.channel_number = message.GetChannelNumber();
 	application_gate_info.packet_type = IcePacketIdentifier::FindPacketType(message.GetData());
 
-	// Update GateInfo
-	// If a request comes from a send indication or channel, this is through a turn. When transmitting a packet to the player, it must be sent through a data indication or channel, so it stores related information.
+	// Data arrived via a TURN ChannelData message: record on THIS pair that we
+	// must reply through the same TURN data channel.
 	auto ice_session = FindIceSession(address_pair);
 	if (ice_session != nullptr)
 	{
-		ice_session->SetTurnClient(true);
-		ice_session->SetDataChannelEnabled(true);
-		ice_session->SetDataChannelNumber(application_gate_info.channel_number);
+		ice_session->SetCandidatePairTurnDataChannel(address_pair, remote, application_gate_info.channel_number);
 	}
 
 	// Decapsulate and process the packet again.
@@ -895,28 +921,35 @@ void IcePort::OnStunPacketReceived(const std::shared_ptr<ov::Socket> &remote, co
 	}
 }
 
-bool IcePort::UseCandidate(const std::shared_ptr<IceSession> &ice_session, const ov::SocketAddressPair &address_pair)
+bool IcePort::MarkNominated(const std::shared_ptr<IceSession> &ice_session, const ov::SocketAddressPair &address_pair)
 {
-	if (ice_session->GetState() == IceConnectionState::Connected && ice_session->GetConnectedCandidatePair()->GetAddressPair() == address_pair)
-	{
-		// Already connected
-		return true;
-	}
-
-	if (ice_session->UseCandidate(address_pair) == false)
+	if (ice_session->MarkNominated(address_pair) == false)
 	{
 		return false;
 	}
 
-	if (ice_session->IsTurnClient())
-	{
-		logti("Session %u uses candidate: %s [TURN]", ice_session->GetSessionID(), address_pair.ToString().CStr());
-	}
-	else
-	{
-		logti("Session %u uses candidate: %s", ice_session->GetSessionID(), address_pair.ToString().CStr());
-	}
+	// Ensure application packets on this pair can resolve the session
 	AddIceSession(address_pair, ice_session);
+
+	const char *transport = "";
+	auto candidate_pair = ice_session->FindCandidatePair(address_pair);
+	if (candidate_pair != nullptr)
+	{
+		switch (candidate_pair->GetTransportType())
+		{
+			case IceCandidatePair::TransportType::TurnDataChannel:
+				transport = " [TURN/ChannelData]";
+				break;
+			case IceCandidatePair::TransportType::TurnSendIndication:
+				transport = " [TURN/SendIndication]";
+				break;
+			default:
+				break;
+		}
+	}
+
+	logti("Session %u nominated candidate: %s%s", ice_session->GetSessionID(),
+		  address_pair.ToString().CStr(), transport);
 
 	return true;
 }
@@ -967,13 +1000,16 @@ bool IcePort::OnReceivedStunBindingRequest(const std::shared_ptr<ov::Socket> &re
 	auto old_state = ice_session->GetState();
 	ice_session->OnReceivedStunBindingRequest(address_pair, remote);
 
-	// Check the USE-CANDIDATE attribute if session role is controlled
+	// Register this validated pair so app packets on it resolve the session
+	AddIceSession(address_pair, ice_session);
+
+	// Peer (controlling) nominated this pair via USE-CANDIDATE
 	if (ice_session->GetRole() == IceSession::Role::CONTROLLED)
 	{
 		auto use_candidate_attr = message.GetAttribute<StunAttribute>(StunAttributeType::UseCandidate);
 		if (use_candidate_attr != nullptr)
 		{
-			UseCandidate(ice_session, address_pair);
+			MarkNominated(ice_session, address_pair);
 		}
 	}
 
@@ -1008,26 +1044,19 @@ bool IcePort::OnReceivedStunBindingRequest(const std::shared_ptr<ov::Socket> &re
 		SendStunMessage(remote, address_pair, gate_info, response_message, ice_session->GetLocalSdp()->GetIcePwd().ToData(false));
 	}
 
-	// Already connected, we don't send stun binding request to another peer address
-	if (ice_session->GetState() == IceConnectionState::Connected)
+	// Invariant: a Connected session always has an active pair.
+	if (ice_session->GetState() == IceConnectionState::Connected && ice_session->GetActiveCandidatePair() == nullptr)
 	{
-		auto connected_candidate_pair = ice_session->GetConnectedCandidatePair();
-		if (connected_candidate_pair == nullptr)
-		{
-			// This should not happen
-			logte("IceSession(%u) is in connected state, but connected candidate pair is null", ice_session->GetSessionID());
-			return false;
-		}
-
-		if (connected_candidate_pair->GetAddressPair() != address_pair)
-		{
-			logtt("Already connected with another address : Connected(%s) Bind Request(%s)", connected_candidate_pair->GetAddressPair().ToString().CStr(), address_pair.ToString().CStr());
-			// Didn't respond
-			return true;
-		}
+		// This should not happen
+		logte("IceSession(%u) is in connected state, but active candidate pair is null", ice_session->GetSessionID());
+		return false;
 	}
 
-	// OvenMediaEngine sends Stun Binding Request to peer at this point
+	// Always answer with our own binding request (ICE triggered check), even
+	// when already connected on another pair, so every pair the peer keeps
+	// checking stays a viable fallback it can switch to. For CONTROLLING this
+	// also re-advertises USE-CANDIDATE. The active pair is decided by where
+	// the peer actually sends data (SelectActiveCandidatePair).
 	SendStunBindingRequest(remote, address_pair, gate_info, ice_session);
 
 	return true;
@@ -1066,17 +1095,13 @@ bool IcePort::SendStunBindingRequest(const std::shared_ptr<ov::Socket> &remote, 
 		ice_controlling_attr->SetValue(0x0000000000000001);
 		message.AddAttribute(ice_controlling_attr);
 
-		// TODO(Getroot): For now, it connect to the first connectable candidate pair,
-		// but we have to select the best pair among all nominated pairs and connect.
-		if (ice_session->GetState() == IceConnectionState::Checking && ice_session->IsConnectable(address_pair))
+		// Nominate every connectable pair so the controlled peer can use
+		// whichever is valid for it (host/tcp/relay). The pair we send on is
+		// decided later by where the peer sends application data.
+		if (ice_session->IsConnectable(address_pair))
 		{
-			UseCandidate(ice_session, address_pair);
-		}
+			MarkNominated(ice_session, address_pair);
 
-		// Ice Session State can be changed upper code, so check it again.
-		if (ice_session->GetState() == IceConnectionState::Connected && ice_session->IsConnected(address_pair))
-		{
-			// USE-CANDIDATE Attribute
 			auto use_candidate_attr = std::make_shared<StunUseCandidateAttribute>();
 			message.AddAttribute(use_candidate_attr);
 
@@ -1152,11 +1177,11 @@ bool IcePort::OnReceivedStunBindingResponse(const std::shared_ptr<ov::Socket> &r
 	auto old_state = ice_session->GetState();
 	ice_session->OnReceivedStunBindingResponse(address_pair, remote);
 
-	if (ice_session->GetState() == IceConnectionState::Checking && ice_session->IsConnectable(address_pair))
+	// On the first time this pair is validated, nominate it and immediately
+	// send a binding request so the peer receives USE-CANDIDATE quickly.
+	// MarkNominated() is idempotent, so this burst happens once per pair.
+	if (ice_session->IsConnectable(address_pair) && MarkNominated(ice_session, address_pair))
 	{
-		UseCandidate(ice_session, address_pair);
-
-		// Send STUN Binding Request for quickly connect
 		SendStunBindingRequest(remote, address_pair, gate_info, ice_session);
 	}
 
@@ -1331,13 +1356,11 @@ bool IcePort::OnReceivedTurnSendIndication(const std::shared_ptr<ov::Socket> &re
 	gate_info.peer_address = xor_peer_attribute->GetAddress();
 
 	std::shared_ptr<IceSession> ice_session = FindIceSession(address_pair);
-	// Connected Session,
-	// if agent sends data to TURN server (Send Indication) then ome will respond to agent through TURN server (Send Indication)
+	// Data arrived via a TURN Send Indication: record on THIS pair that we must
+	// reply through a TURN Send Indication to the TURN peer address.
 	if (ice_session != nullptr)
 	{
-		ice_session->SetTurnClient(true);
-		ice_session->SetDataChannelEnabled(false);
-		ice_session->SetTurnPeerAddress(gate_info.peer_address);
+		ice_session->SetCandidatePairTurnSendIndication(address_pair, remote, gate_info.peer_address);
 	}
 
 	OnPacketReceived(remote, address_pair, gate_info, data);
@@ -1372,13 +1395,11 @@ bool IcePort::OnReceivedTurnChannelBindRequest(const std::shared_ptr<ov::Socket>
 	SendStunMessage(remote, address_pair, gate_info, response_message, _hmac_key);
 
 	std::shared_ptr<IceSession> ice_session = FindIceSession(address_pair);
-	// Connected Session,
-	// if agent sends data to TURN server (Data Channel) then ome will respond to agent through TURN server (Data Channel)
+	// Channel bound: record on THIS pair that we must reply through this TURN
+	// data channel.
 	if (ice_session != nullptr)
 	{
-		ice_session->SetTurnClient(true);
-		ice_session->SetDataChannelEnabled(true);
-		ice_session->SetDataChannelNumber(channel_number_attribute->GetChannelNumber());
+		ice_session->SetCandidatePairTurnDataChannel(address_pair, remote, channel_number_attribute->GetChannelNumber());
 	}
 
 	return true;

@@ -559,14 +559,9 @@ std::shared_ptr<MediaDescription> RtcStream::MakeVideoDescription() const
 	video_media_desc->SetConnection(4, "0.0.0.0");
 	video_media_desc->SetMid(ov::Random::GenerateString(6));
 	video_media_desc->SetMsid(_msid, ov::Random::GenerateString(36));
-	/*
-	https://tools.ietf.org/html/rfc5763#section-5
-	
-	The endpoint MUST use the setup attribute defined in [RFC4145].
-	The endpoint that is the offerer MUST use the setup attribute
-	value of setup:actpass and be prepared to receive a client_hello
-	before it receives the answer.
-	*/
+	// RFC 5763 / RFC 8842: the offerer must use actpass. OME's DTLS is
+	// currently server-only, which is safe because browsers answer with
+	// active. DTLS active mode is planned.
 	video_media_desc->SetSetup(MediaDescription::SetupType::ActPass);
 	video_media_desc->UseDtls(true);
 	video_media_desc->UseRtcpMux(true);
@@ -611,6 +606,7 @@ std::shared_ptr<MediaDescription> RtcStream::MakeAudioDescription() const
 	// TODO(dimiden): Need to prevent duplication
 	audio_media_desc->SetMid(ov::Random::GenerateString(6));
 	audio_media_desc->SetMsid(_msid, ov::Random::GenerateString(36));
+	// See MakeVideoDescription(): offerer must use actpass (RFC 5763 / 8842).
 	audio_media_desc->SetSetup(MediaDescription::SetupType::ActPass);
 	audio_media_desc->UseDtls(true);
 	audio_media_desc->UseRtcpMux(true);

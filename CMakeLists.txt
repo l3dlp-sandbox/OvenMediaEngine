@@ -22,6 +22,50 @@ project(OvenMediaEngine
 )
 
 # ==============================================================================
+# Toolchain sanity check
+# ------------------------------------------------------------------------------
+# Older libstdc++ has a wait_until() overflow bug (GCC PR 91906): predicate-based
+# wait_until() on a non-system_clock time_point converts via system_clock and
+# overflows for ::time_point::max(), causing immediate timeout and busy-spin
+# instead of waiting. The fix uses pthread_cond_clockwait() and is gated by the
+# _GLIBCXX_USE_PTHREAD_COND_CLOCKWAIT macro, defined when libstdc++ is built
+# against glibc >= 2.30 (present in libstdc++ 10+).
+#
+# Include a public standard header so libc++ environments (no <bits/...>) pass
+# through this check naturally: __GLIBCXX__ stays undefined and the guard is a
+# no-op.
+# ==============================================================================
+include(CheckCXXSourceCompiles)
+
+check_cxx_source_compiles("
+#include <cstddef>
+#if defined(__GLIBCXX__) && !defined(_GLIBCXX_USE_PTHREAD_COND_CLOCKWAIT)
+#  error \"libstdc++ without pthread_cond_clockwait support\"
+#endif
+int main() {}
+" OME_HAS_SAFE_CXX_STDLIB)
+
+if(NOT OME_HAS_SAFE_CXX_STDLIB)
+    message(FATAL_ERROR
+        "\n"
+        "Your libstdc++ does not enable pthread_cond_clockwait(), which means\n"
+        "predicate-based wait_until() on steady_clock busy-spins instead of\n"
+        "waiting (GCC PR 91906). This affects libstdc++ 9 and older, or any\n"
+        "libstdc++ built against glibc < 2.30.\n"
+        "\n"
+        "Supported out of the box:\n"
+        "  - Ubuntu 20.04.4+ / 22.04+\n"
+        "  - Debian 11+ (with up-to-date libstdc++)\n"
+        "  - RHEL / Rocky / AlmaLinux 9+\n"
+        "  - Fedora 35+\n"
+        "  - Amazon Linux 2023\n"
+        "\n"
+        "For other systems, use the official Docker image:\n"
+        "  docker pull airensoft/ovenmediaengine:latest\n"
+    )
+endif()
+
+# ==============================================================================
 # CMake settings
 # ==============================================================================
 if(NOT CMAKE_GENERATOR MATCHES "Ninja")

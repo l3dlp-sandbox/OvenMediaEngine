@@ -13,6 +13,7 @@ public:
 		H264,
 		H265,
 		VP8,
+		AV1,
 		OPUS,
 		MPEG4_GENERIC_AUDIO
 	};

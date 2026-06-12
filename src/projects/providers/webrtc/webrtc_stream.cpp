@@ -17,6 +17,11 @@
 #include "webrtc_private.h"
 #include "webrtc_provider.h"
 
+#if DEBUG
+#	include "base/ovlibrary/dump_utilities.h"
+#	include "base/ovlibrary/path_manager.h"
+#endif	// DEBUG
+
 namespace pvd
 {
 	std::shared_ptr<WebRTCStream> WebRTCStream::Create(StreamSourceType source_type, ov::String stream_name,
@@ -440,6 +445,13 @@ namespace pvd
 			track->SetOriginBitstream(cmn::BitstreamFormat::VP8_RTP_RFC_7741);
 			track->SetVideoTimestampScale(1.0);
 		}
+		else if (codec == PayloadAttr::SupportCodec::AV1)
+		{
+			track->SetMediaType(cmn::MediaType::Video);
+			track->SetCodecId(cmn::MediaCodecId::Av1);
+			track->SetOriginBitstream(cmn::BitstreamFormat::AV1_RTP_AOM);
+			track->SetVideoTimestampScale(1.0);
+		}
 		else
 		{
 			logte("%s - Unsupported codec : codec(%d)", GetName().CStr(), static_cast<uint8_t>(codec));
@@ -684,6 +696,10 @@ namespace pvd
 				depacketizer_codec_id = RtpDepacketizingManager::SupportedDepacketizerType::VP8;
 				break;
 
+			case cmn::MediaCodecId::Av1:
+				depacketizer_codec_id = RtpDepacketizingManager::SupportedDepacketizerType::AV1;
+				break;
+
 			case cmn::MediaCodecId::Aac:
 				depacketizer_codec_id = RtpDepacketizingManager::SupportedDepacketizerType::MPEG4_GENERIC_AUDIO;
 				break;
@@ -881,10 +897,34 @@ namespace pvd
 				packet_type = cmn::PacketType::RAW;
 				break;
 
+			case cmn::MediaCodecId::Av1:
+				// Depacketizer emits a low-overhead OBU temporal unit
+				bitstream_format = cmn::BitstreamFormat::AV1_OBU;
+				packet_type = cmn::PacketType::RAW;
+				break;
+
 			// It can't be reached here because it has already failed in GetDepacketizer.
 			default:
 				return;
 		}
+
+#if DEBUG
+		// When OME_DUMP_WHIP is set, dump assembled AV1 OBU temporal units to
+		// <app>/dump/whip/<stream>_track<id>.obu. Each temporal unit is prefixed with a Temporal
+		// Delimiter OBU so the file is a standard low-overhead .obu stream that ffmpeg/dav1d can
+		// decode directly.
+		static const bool dump_whip = ov::Converter::ToBool(std::getenv("OME_DUMP_WHIP"));
+		if (dump_whip && bitstream_format == cmn::BitstreamFormat::AV1_OBU)
+		{
+			auto safe_name = GetName().Replace("/", "_").Replace("#", "_");
+			auto dump_path = ov::PathManager::Combine(
+				ov::PathManager::GetAppPath("dump/whip"),
+				ov::String::FormatString("%s_track%u.obu", safe_name.CStr(), track->GetId()));
+			static const uint8_t td_obu[2] = {0x12, 0x00};	// Temporal Delimiter OBU (type 2, size 0)
+			ov::DumpToFile(dump_path.CStr(), td_obu, sizeof(td_obu), 0, true);
+			ov::DumpToFile(dump_path.CStr(), bitstream, 0, true);
+		}
+#endif	// DEBUG
 
 		int64_t adjusted_timestamp;
 		if (AdjustRtpTimestamp(track_id, first_rtp_packet->Timestamp(), std::numeric_limits<uint32_t>::max(), adjusted_timestamp) == false)

@@ -20,6 +20,11 @@ namespace ov
 	{
 	public:
 		BpsCalculator();
+		~BpsCalculator()
+		{
+			// Join the timer thread while every member it touches is still alive
+			_timer.Stop();
+		}
 
 		void AddBits(int64_t bits);
 
@@ -32,7 +37,7 @@ namespace ov
 		DelayQueue _timer{"BpsCalc"};
 		StopWatch _stop_watch;
 
-		SharedMutex _mutex;
+		mutable SharedMutex _mutex;
 		int64_t _bits[10] OV_GUARDED_BY(_mutex){0};
 		int _bits_count OV_GUARDED_BY(_mutex) = 0;
 

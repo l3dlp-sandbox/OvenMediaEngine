@@ -45,14 +45,16 @@ public:
 	// 그 외에는 모르는 패킷이므로 처리하지 않는다.
 	bool RecvPacket(const std::shared_ptr<ov::Data> &data);
 
-protected:
-	// SSL에서 암호화 할 패킷을 읽어갈 때 호출한다. _packet_buffer에 쌓인 패킷을 준다.
-	ssize_t Read(ov::Tls *tls, void *buffer, size_t length) OV_NO_THREAD_SAFETY_ANALYSIS;
+private:
+	// BIO read callback: hands the packets buffered in `_packet_buffer` to the TLS layer.
+	// Invoked only through the in-class BIO binding, and every entry path runs `_tls`
+	// operations under `_tls_lock` - hence `OV_REQUIRES` on a private method is satisfiable.
+	ssize_t Read(ov::Tls *tls, void *buffer, size_t length) OV_REQUIRES(_tls_lock);
 
-	// SSL에서 복호화한 패킷의 전송을 요청할 때 호출한다. ice로 최종 전송한다.
+	// BIO write callback: requested when the TLS layer emits a packet; finally sent via ICE
 	ssize_t Write(ov::Tls *tls, const void *data, size_t length);
 
-	bool VerifyPeerCertificate() OV_NO_THREAD_SAFETY_ANALYSIS;
+	bool VerifyPeerCertificate() OV_REQUIRES(_tls_lock);
 
 private:
 	bool ContinueSSL() OV_REQUIRES(_tls_lock);
@@ -81,11 +83,11 @@ private:
 	std::shared_ptr<info::Session> _session_info;
 	std::shared_ptr<IcePort> _ice_port;
 	std::shared_ptr<SrtpTransport> _srtp_transport;
-	std::shared_ptr<::Certificate> _local_certificate;
-	std::shared_ptr<ov::TlsContext> _tls_context;
+	std::shared_ptr<::Certificate> _local_certificate OV_GUARDED_BY(_tls_lock);
+	std::shared_ptr<ov::TlsContext> _tls_context OV_GUARDED_BY(_tls_lock);
 	std::shared_ptr<::Certificate> _peer_certificate OV_GUARDED_BY(_tls_lock);
-	ov::String _peer_fingerprint_algorithm;
-	ov::String _peer_fingerprint_value;
+	ov::String _peer_fingerprint_algorithm OV_GUARDED_BY(_tls_lock);
+	ov::String _peer_fingerprint_value OV_GUARDED_BY(_tls_lock);
 
 	// SSL이 가져갈 패킷을 임시로 보관하는 버퍼, 동시에 1개만 저장한다.
 	std::deque<std::shared_ptr<const ov::Data>> _packet_buffer OV_GUARDED_BY(_tls_lock);

@@ -65,8 +65,17 @@ namespace pvd
 		}
 
 	private:
+		bool StopInternal() OV_REQUIRES(_start_stop_stream_lock);
+
+		// Locked body of `Resume()`: retry-count check + one `RestartStream()` attempt.
+		// `UpdateStream()`/`Stream::Start()` are deliberately called by the wrapper AFTER
+		// the lock is released, so this lock is never held while entering
+		// `Application`/`MediaRouter`.
+		bool ResumeInternal() OV_REQUIRES(_start_stop_stream_lock);
+		const std::shared_ptr<const ov::Url> GetNextURL() OV_REQUIRES(_start_stop_stream_lock);
+
 		uint32_t	_restart_count OV_GUARDED_BY(_start_stop_stream_lock) = 0;
-		std::vector<std::shared_ptr<const ov::Url>> _url_list;
+		std::vector<std::shared_ptr<const ov::Url>> _url_list OV_GUARDED_BY(_start_stop_stream_lock);
 		int _curr_url_index OV_GUARDED_BY(_start_stop_stream_lock) = 0;
 
 		std::shared_ptr<pvd::PullStreamProperties> _properties;
@@ -75,7 +84,6 @@ namespace pvd
 		ov::Mutex _start_stop_stream_lock;
 
 	public:
-		const std::shared_ptr<const ov::Url> GetNextURL();
 		const std::shared_ptr<const ov::Url> GetPrimaryURL();
 		void ResetUrlIndex();
 		bool IsCurrPrimaryURL();

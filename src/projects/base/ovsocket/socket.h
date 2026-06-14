@@ -176,7 +176,7 @@ namespace ov
 		SocketType GetType() const;
 		std::shared_ptr<SocketAsyncInterface> GetAsyncInterface()
 		{
-			return _callback;
+			return std::atomic_load(&_callback);
 		}
 
 		// only available for SRT socket
@@ -223,6 +223,7 @@ namespace ov
 
 		bool HasCommand() const
 		{
+			LockGuard lock_guard(_dispatch_queue_lock);
 			return _dispatch_queue.size() > 0;
 		}
 
@@ -230,7 +231,7 @@ namespace ov
 		{
 			LockGuard lock_guard(_dispatch_queue_lock);
 
-			if (HasCommand())
+			if (_dispatch_queue.size() > 0)
 			{
 				return _dispatch_queue.front().IsExpired(OV_SOCKET_EXPIRE_TIMEOUT);
 			}
@@ -548,7 +549,9 @@ namespace ov
 
 		// A temporary variable used to send callback without mutex lock
 		std::shared_ptr<SocketAsyncInterface> _post_callback;
-		SocketState _close_reason = SocketState::Closed;
+		// Atomic: a second `CloseInternal()` can rewrite this while the close callback
+		// thread is still reading the first close's value (no common lock on that pair)
+		std::atomic<SocketState> _close_reason{SocketState::Closed};
 
 		std::atomic<bool> _force_stop = false;
 

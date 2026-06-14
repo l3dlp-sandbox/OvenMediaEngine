@@ -57,9 +57,9 @@ namespace info
 			TimeBased  = 1
 		};
 
-		const char *GetThresholdModeString() const
+		static const char *GetThresholdModeString(ThresholdMode threshold_mode)
 		{
-			switch (_threshold_mode)
+			switch (threshold_mode)
 			{
 			case ThresholdMode::CountBased:
 				return "CountBased";
@@ -175,6 +175,7 @@ namespace info
 
 		ov::String GetTypeName() const
 		{
+			ov::SharedLockGuard lock_guard(_name_mutex);
 			return _type_name;
 		}
 
@@ -203,6 +204,7 @@ namespace info
 
 		ThresholdMode GetThresholdMode() const
 		{
+			ov::SharedLockGuard lock_guard(_name_mutex);
 			return _threshold_mode;
 		}
 
@@ -211,11 +213,13 @@ namespace info
 		//   TimeBased  mode → milliseconds
 		size_t GetThresholdValue() const
 		{
+			ov::SharedLockGuard lock_guard(_name_mutex);
 			return _threshold_value;
 		}
 
 		size_t GetThreshold() const
 		{
+			ov::SharedLockGuard lock_guard(_name_mutex);
 			return _threshold;
 		}
 
@@ -264,11 +268,13 @@ namespace info
 
 		std::shared_ptr<URN> GetUrn() const
 		{
+			ov::SharedLockGuard lock_guard(_name_mutex);
 			return _urn;
 		}
 
 		ov::String ToString() const
 		{
+			ov::SharedLockGuard lock_guard(_name_mutex);
 			if(_urn == nullptr)
 			{
 				return "No Urn";
@@ -285,21 +291,28 @@ namespace info
 		}
 
 	protected:
-		// ID of the queue
-		managed_queue_id_t _id = 0;
+		// ID of the queue (set once at registration)
+		std::atomic<managed_queue_id_t> _id{0};
 
 		// Name of the queue
-		ov::SharedMutex _name_mutex;
+		mutable ov::SharedMutex _name_mutex;
 		std::shared_ptr<URN> _urn OV_GUARDED_BY(_name_mutex);
 
 		// Type of template
 		ov::String _type_name OV_GUARDED_BY(_name_mutex);
 
+		// The ATOMIC metric members below are written only under the derived queue's
+		// `_mutex` (kept consistent with the queue contents there);
+		// they are atomic so that lock-free diagnostic/monitoring reads
+		// (`GetSize()`/`GetInfoString()`/...) are well-defined.
+		// TSA cannot model atomics, hence no `OV_GUARDED_BY`.
+		// (`_threshold*` members are a separate group, guarded by `_name_mutex`.)
+
 		// Peak size of the queue
-		size_t _peak = 0;
+		std::atomic<size_t> _peak{0};
 
 		// Current size of the queue
-		size_t _size = 0;
+		std::atomic<size_t> _size{0};
 
 		// Threshold value computed according to the Threshold Mode.
 		// 0 : No threshold
@@ -315,26 +328,26 @@ namespace info
 		std::atomic<int64_t> _threshold_exceeded_time_ms{0};
 
 		// Buffering delay (milliseconds).
-		int _buffering_delay = 0;
+		std::atomic<int> _buffering_delay{0};
 
 		// Input Message Count
-		int64_t _input_message_count = 0;
-		int64_t _last_input_message_count = 0;
+		std::atomic<int64_t> _input_message_count{0};
+		std::atomic<int64_t> _last_input_message_count{0};
 		// Output Message Count
-		int64_t _output_message_count = 0;
-		int64_t _last_output_message_count = 0;
+		std::atomic<int64_t> _output_message_count{0};
+		std::atomic<int64_t> _last_output_message_count{0};
 
 		// Input Message Per Second
-		size_t _input_message_per_second = 0;
+		std::atomic<size_t> _input_message_per_second{0};
 
 		// Output Message Per Second
-		size_t _output_message_per_second = 0;
+		std::atomic<size_t> _output_message_per_second{0};
 
 		// Average Waiting Time(microseconds)
-		int64_t _waiting_time_in_us = 0;
+		std::atomic<int64_t> _waiting_time_in_us{0};
 
 		// Drop Count
-		uint64_t _drop_message_count = 0;
+		std::atomic<uint64_t> _drop_message_count{0};
 	};
 
 }  // namespace info

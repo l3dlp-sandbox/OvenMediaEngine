@@ -36,21 +36,22 @@ namespace http
 		{
 			OV_ASSERT2(http_response != nullptr);
 
+			_tls_data = std::atomic_load(&http_response->_tls_data);
+
+			ov::LockGuard lock(http_response->_response_mutex);
+
 			_client_socket = http_response->_client_socket;
-			_tls_data = http_response->_tls_data;
-			_status_code = http_response->_status_code;
-			_reason = http_response->_reason;
+			_status_code = http_response->_status_code.load();
 			_is_header_sent = http_response->_is_header_sent;
 			_response_header = http_response->_response_header;
 			_response_data_list = http_response->_response_data_list;
-			_response_data_size = http_response->_response_data_size;
-			_default_value = http_response->_default_value;
+			_response_data_size = http_response->_response_data_size.load();
 			_created_time = http_response->_created_time;
 		}
 
 		void HttpResponse::SetTlsData(const std::shared_ptr<ov::TlsServerData> &tls_data)
 		{
-			_tls_data = tls_data;
+			std::atomic_store(&_tls_data, tls_data);
 		}
 
 		std::shared_ptr<ov::ClientSocket> HttpResponse::GetRemote()
@@ -65,7 +66,7 @@ namespace http
 
 		std::shared_ptr<ov::TlsServerData> HttpResponse::GetTlsData()
 		{
-			return _tls_data;
+			return std::atomic_load(&_tls_data);
 		}
 
 		void HttpResponse::SetMethod(Method method)
@@ -80,12 +81,13 @@ namespace http
 
 		void HttpResponse::SetIfNoneMatch(const ov::String &etag)
 		{
-			_if_none_match = etag;
+			std::atomic_store(&_if_none_match, std::make_shared<const ov::String>(etag));
 		}
 
-		const ov::String &HttpResponse::GetIfNoneMatch() const
+		ov::String HttpResponse::GetIfNoneMatch() const
 		{
-			return _if_none_match;
+			auto if_none_match = std::atomic_load(&_if_none_match);
+			return (if_none_match != nullptr) ? *if_none_match : "";
 		}
 
 		StatusCode HttpResponse::GetStatusCode() const
@@ -96,30 +98,25 @@ namespace http
 		// Get Reason
 		ov::String HttpResponse::GetReason() const
 		{
-			return _reason;
+			return StringFromStatusCode(_status_code);
 		}
 
 		// reason = default
 		void HttpResponse::SetStatusCode(StatusCode status_code)
 		{
-			SetStatusCode(status_code, StringFromStatusCode(status_code));
-		}
-
-		// custom reason
-		void HttpResponse::SetStatusCode(StatusCode status_code, const ov::String &reason)
-		{
 			_status_code = status_code;
-			_reason = reason;
 		}
 
 		bool HttpResponse::AddHeader(const ov::String &key, const ov::String &value)
 		{
+			ov::LockGuard lock(_response_mutex);
+
 			if (IsHeaderSent())
 			{
 				logtw("Cannot add header: Header is sent: %s", _client_socket->ToString().CStr());
 				return false;
 			}
-			
+
 			_response_header[key].push_back(value);
 
 			return true;
@@ -127,12 +124,14 @@ namespace http
 
 		bool HttpResponse::SetHeader(const ov::String &key, const ov::String &value)
 		{
+			ov::LockGuard lock(_response_mutex);
+
 			if (IsHeaderSent())
 			{
 				logtw("Cannot set header: Header is sent: %s", _client_socket->ToString().CStr());
 				return false;
 			}
-			
+
 			_response_header[key] = {value};
 
 			return true;
@@ -140,6 +139,8 @@ namespace http
 
 		bool HttpResponse::UnsetHeader(const ov::String &key)
 		{
+			ov::LockGuard lock(_response_mutex);
+
 			if (IsHeaderSent())
 			{
 				logtw("Cannot unset header: Header is sent: %s", _client_socket->ToString().CStr());
@@ -157,13 +158,15 @@ namespace http
 			return true;
 		}
 
-		const std::vector<ov::String> &HttpResponse::GetHeader(const ov::String &key) const
+		std::vector<ov::String> HttpResponse::GetHeader(const ov::String &key) const
 		{
+			ov::LockGuard lock(_response_mutex);
+
 			auto item = _response_header.find(key);
 
 			if (item == _response_header.end())
 			{
-				return _default_value;
+				return {};
 			}
 
 			return item->second;
@@ -171,6 +174,8 @@ namespace http
 
 		bool HttpResponse::RemoveHeader(const ov::String &key)
 		{
+			ov::LockGuard lock(_response_mutex);
+
 			if (IsHeaderSent())
 			{
 				logtw("Cannot remove header: Header is sent: %s", _client_socket->ToString().CStr());
@@ -196,7 +201,7 @@ namespace http
 				return "";
 			}
 
-			return ov::String::FormatString("%s-%zu", _response_hash->ToHexString().CStr(), _response_data_size);
+			return ov::String::FormatString("%s-%zu", _response_hash->ToHexString().CStr(), _response_data_size.load());
 		}
 
 		bool HttpResponse::AppendData(const std::shared_ptr<const ov::Data> &data)
@@ -206,7 +211,7 @@ namespace http
 				return false;
 			}
 
-			ov::LockGuard<decltype(_response_mutex)> lock(_response_mutex);
+			ov::LockGuard lock(_response_mutex);
 
 			auto cloned_data = data->Clone();
 
@@ -256,6 +261,7 @@ namespace http
 
 		bool HttpResponse::IsHeaderSent() const
 		{
+			ov::LockGuard lock(_response_mutex);
 			return _is_header_sent;
 		}
 
@@ -266,19 +272,22 @@ namespace http
 		}
 
 		// Get Response Data List
-		const std::vector<std::shared_ptr<const ov::Data>> &HttpResponse::GetResponseDataList() const
+		std::vector<std::shared_ptr<const ov::Data>> HttpResponse::GetResponseDataList() const
 		{
+			ov::LockGuard lock(_response_mutex);
 			return _response_data_list;
 		}
 
 		// Get Response Header
-		const std::unordered_map<ov::String, std::vector<ov::String>, ov::CaseInsensitiveHash, ov::CaseInsensitiveEqual> &HttpResponse::GetResponseHeaderList() const
+		std::unordered_map<ov::String, std::vector<ov::String>, ov::CaseInsensitiveHash, ov::CaseInsensitiveEqual> HttpResponse::GetResponseHeaderList() const
 		{
+			ov::LockGuard lock(_response_mutex);
 			return _response_header;
 		}
 
 		void HttpResponse::ResetResponseData()
 		{
+			ov::LockGuard lock(_response_mutex);
 			_response_data_list.clear();
 			_response_data_size = 0ULL;
 		}
@@ -294,7 +303,7 @@ namespace http
 		{
 			return _response_time;
 		}
-		
+
 		// Get Sent size
 		uint32_t HttpResponse::GetSentSize() const
 		{
@@ -303,7 +312,7 @@ namespace http
 
 		int32_t HttpResponse::Response()
 		{
-			ov::LockGuard<decltype(_response_mutex)> lock(_response_mutex);
+			ov::LockGuard lock(_response_mutex);
 			_response_time = std::chrono::system_clock::now();
 
 			uint32_t sent_size = 0;
@@ -312,7 +321,7 @@ namespace http
 			if (IsHeaderSent() == false)
 			{
 				// Date header
-				auto date = ov::Converter::ToRFC7231String(_response_time);
+				auto date = ov::Converter::ToRFC7231String(_response_time.load());
 				SetHeader("Date", date);
 
 				if (_etag_enabled_by_config == true)
@@ -396,15 +405,18 @@ namespace http
 
 			std::shared_ptr<const ov::Data> send_data;
 
-			if (_tls_data == nullptr)
+			// Atomic snapshot; the encrypt/send path below must not touch `_tls_data` directly
+			auto tls_data = GetTlsData();
+
+			if (tls_data == nullptr)
 			{
 				send_data = data->Clone();
 			}
 			else
 			{
-				ov::LockGuard<ov::Mutex> lock(_tls_data->GetSequentialSendMutex());
+				ov::LockGuard<ov::Mutex> lock(tls_data->GetSequentialSendMutex());
 
-				if (_tls_data->Encrypt(data, &send_data) == false)
+				if (tls_data->Encrypt(data, &send_data) == false)
 				{
 					logte("Failed to encrypt data: %s", _client_socket->ToString().CStr());
 					return false;
@@ -440,11 +452,12 @@ namespace http
 		{
 			ov::String output;
 
+			ov::LockGuard lock(_response_mutex);
 			output.AppendFormat("<HttpResponse> Status(%d) Reason(%s) Header(%zu) Data(%zu)\n",
 								static_cast<int>(GetStatusCode()),
 								GetReason().CStr(),
 								_response_header.size(),
-								_response_data_size);
+								_response_data_size.load());
 
 			output.AppendFormat("\n[Header]\n");
 			for (auto &[key, values] : _response_header)

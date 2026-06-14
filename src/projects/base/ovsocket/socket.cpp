@@ -1955,7 +1955,7 @@ namespace ov
 		CHECK_STATE(== SocketState::Connected, false);
 
 		// Dispatch ALL commands
-		while (_dispatch_queue.size() > 0)
+		while (HasCommand())
 		{
 			if (DispatchEvents() == DispatchResult::Error)
 			{
@@ -2188,8 +2188,11 @@ namespace ov
 	{
 		CHECK_STATE(!= SocketState::Closed, false);
 
-		_post_callback = std::atomic_exchange(&_callback, {});
-		_close_reason  = close_reason;
+		// Written BEFORE the `_post_callback` store so the first close's reason is
+		// published with the handoff; atomic because a second `CloseInternal()` can
+		// rewrite it while the callback thread still reads the first value
+		_close_reason = close_reason;
+		std::atomic_store(&_post_callback, std::atomic_exchange(&_callback, {}));
 
 		if (_socket.IsValid())
 		{

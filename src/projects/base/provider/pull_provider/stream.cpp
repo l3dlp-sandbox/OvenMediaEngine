@@ -42,11 +42,21 @@ namespace pvd
 
 	bool PullStream::Start()
 	{
-		ov::LockGuard<ov::Mutex> lock(_start_stop_stream_lock);
+		ov::LockGuard lock(_start_stop_stream_lock);
 		_restart_count = 0;
 		while (true)
 		{
-			if (StartStream(GetNextURL()) == false)
+			auto url = GetNextURL();
+			if (url == nullptr)
+			{
+				// Empty URL list (e.g. every configured URL failed to parse).
+				// Must be filtered HERE: provider `StartStream()` implementations
+				// dereference the URL unconditionally, so a `nullptr` would crash.
+				SetState(Stream::State::TERMINATED);
+				return false;
+			}
+
+			if (StartStream(url) == false)
 			{
 				_restart_count++;
 				if (_restart_count > (_url_list.size() * _properties->GetRetryCount()))
@@ -68,22 +78,52 @@ namespace pvd
 
 	bool PullStream::Stop()
 	{
-		ov::LockGuard<ov::Mutex> lock(_start_stop_stream_lock);
+		ov::LockGuard lock(_start_stop_stream_lock);
+		return StopInternal();
+	}
+
+	bool PullStream::StopInternal()
+	{
 		StopStream();
 		return Stream::Stop();
 	}
 
 	bool PullStream::Resume()
 	{
+		{
+			ov::LockGuard lock(_start_stop_stream_lock);
+
+			if (ResumeInternal() == false)
+			{
+				return false;
+			}
+		}
+
+		UpdateStream();
+
+		return Stream::Start();
+	}
+
+	bool PullStream::ResumeInternal()
+	{
 		if (_properties->GetRetryCount() <= 0)
 		{
 			SetState(Stream::State::TERMINATED);
 			return false;
 		}
-		
-		if (RestartStream(GetNextURL()) == false)
+
+		auto url = GetNextURL();
+		if (url == nullptr)
 		{
-			Stop();
+			// Empty URL list - nothing to reconnect to. Same as Start(): a nullptr
+			// must not reach RestartStream(), which dereferences it unconditionally.
+			SetState(Stream::State::TERMINATED);
+			return false;
+		}
+
+		if (RestartStream(url) == false)
+		{
+			StopInternal();
 			_restart_count++;
 			if (_restart_count > _url_list.size() * _properties->GetRetryCount())
 			{
@@ -94,10 +134,8 @@ namespace pvd
 			return false;
 		}
 
-		UpdateStream();
-
 		_restart_count = 0;
-		return Stream::Start();
+		return true;
 	}
 
 	const std::shared_ptr<const ov::Url> PullStream::GetNextURL()
@@ -122,6 +160,8 @@ namespace pvd
 
 	const std::shared_ptr<const ov::Url> PullStream::GetPrimaryURL()
 	{
+		ov::LockGuard lock(_start_stop_stream_lock);
+
 		if (_url_list.size() == 0)
 		{
 			return nullptr;
@@ -134,6 +174,14 @@ namespace pvd
 
 	bool PullStream::IsCurrPrimaryURL()
 	{
+		ov::LockGuard lock(_start_stop_stream_lock);
+
+		// No URL to fail back to - treat as primary so the failback path stays idle
+		if (_url_list.empty())
+		{
+			return true;
+		}
+
 		// If the currently playing URL and the 0th URL are the same, it is the primary URL.
 		if (GetMediaSource() == _url_list[0]->ToUrlString(true))
 			return true;
@@ -143,6 +191,8 @@ namespace pvd
 
 	void PullStream::ResetUrlIndex()
 	{
+		ov::LockGuard lock(_start_stop_stream_lock);
+
 		_curr_url_index = 0;
 	}
 

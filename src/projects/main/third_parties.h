@@ -60,33 +60,19 @@ const char *GetJemallocVersion();
 std::shared_ptr<ov::Error> InitializeJemalloc();
 std::shared_ptr<ov::Error> TerminateJemalloc();
 
-// By default, `jemalloc` is enabled only in release builds, and this API does not work in debug mode.
-// If you want to enable it forcibly, comment out the following lines in `projects/main/AMS.mk`.
-//
-// ```
-// # ifeq ($(MAKECMDGOALS),release)
-// $(call add_pkg_config,jemalloc)
-// LOCAL_CFLAGS += -DOME_USE_JEMALLOC
-// LOCAL_CXXFLAGS += -DOME_USE_JEMALLOC
-// # endif
-// ```
+// By default, `jemalloc` is enabled in release builds and disabled in debug builds, so this API
+// does nothing in debug builds unless you enable it explicitly.
+// To enable it regardless of the build type, configure CMake with `-DOME_ENABLE_JEMALLOC=ON`.
+// Once jemalloc is available, CMake defines the `OME_USE_JEMALLOC` compile definition.
+// See `cmake/README.md#build-options` for details.
 bool JemallocShowStats();
 
-// To use `JemallocTriggerDump()`,
+// `JemallocTriggerDump()` works only when jemalloc is built with heap profiling enabled.
+// Configure CMake with `-DOME_USE_JEMALLOC_PROFILE=ON` (which requires `-DOME_ENABLE_JEMALLOC=ON`):
+// once jemalloc is available, this defines the `OME_USE_JEMALLOC_PROFILE` compile definition and
+// builds jemalloc with `--enable-prof` when it is (re)installed. See `cmake/README.md#build-options` for details.
 //
-// 1) `jemalloc` must be built with the `--enable-prof` option during the `configure` step.
-// ```
-// $ cd path/to/jemalloc
-// $ ./autogen.sh && ./configure --enable-prof && make ...
-// ```
-// 2) Also, `OME_USE_JEMALLOC_PROFILE` must be defined in `projects/main/AMS.mk`.
-// ```
-// $(call add_pkg_config,jemalloc)
-// LOCAL_CFLAGS += -DOME_USE_JEMALLOC -DOME_USE_JEMALLOC_PROFILE
-// LOCAL_CXXFLAGS += -DOME_USE_JEMALLOC -DOME_USE_JEMALLOC_PROFILE
-// ```
-//
-// Otherwise, this function returns `false`.
+// Without heap profiling enabled, this function does nothing and returns `false`.
 bool JemallocTriggerDump();
 
 //--------------------------------------------------------------------

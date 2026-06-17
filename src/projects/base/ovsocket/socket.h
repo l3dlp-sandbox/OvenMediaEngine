@@ -28,6 +28,8 @@
 #include <memory>
 #include <utility>
 
+#include <tl/expected.hpp>
+
 // Failure to send data for the specified time period will be considered an error.
 // For example, it can occur when EAGAIN continues to occur for a period of time, or when the peer's TCP window is full and no longer receives data.
 #define OV_SOCKET_EXPIRE_TIMEOUT (10 * 1000)
@@ -191,17 +193,32 @@ namespace ov
 		bool SendFromTo(const SocketAddressPair &address_pair, const std::shared_ptr<const Data> &data);
 		bool SendFromTo(const SocketAddressPair &address_pair, const void *data, size_t length);
 
-		// When Recv is called in non-blocking mode,
+		// On success, `data->GetLength()` equals the received byte count and this returns `nullptr`.
+		// A length of `0` means either "retry later" (`EAGAIN`/non-blocking with no data)
+		// or, for UDP, a valid 0-length datagram - both are reported as success, not a disconnect.
+		// A TCP/SRT EOF (orderly peer shutdown) is reported as a non-null `SocketError`,
+		// never as a `0`-length success.
 		//
-		// 1. return != nullptr: An error occurred (Include disconnecting the client)
-		// 2. return == nullptr:
-		// 2-1. data->Length() == 0: Retry later (EAGAIN)
-		// 2-2. data->Length() > 0: Data is remained, so must call Recv() again to empty socket buffer
-		//                          (If not, epoll event will not occur later)
+		// In non-blocking mode, if `data->GetLength() > 0`, more data may still remain in the socket
+		// buffer, so callers should continue reading until it returns `0` (retry later) or an error.
 		//
-		// If MakeNonBlocking() is called, non_block is ignored
+		// If `MakeNonBlocking()` is called, `non_block` is ignored.
 		std::shared_ptr<const SocketError> Recv(std::shared_ptr<Data> &data, const bool non_block = false);
-		std::shared_ptr<const SocketError> Recv(void *data, size_t length, size_t *received_length, const bool non_block = false);
+
+		// On success, holds the number of bytes received; on failure, holds a `SocketError`.
+		// A received length of `0` means either "retry later" (`EAGAIN`/non-blocking with no data)
+		// or, for UDP, a valid 0-length datagram - both are reported as success, not a disconnect.
+		// A TCP/SRT EOF (orderly peer shutdown) is reported as a failure (`has_value() == false`),
+		// never as a `0`-length success:
+		//
+		// ```
+		//   auto result = socket->Recv(buffer, length);
+		//   if (result.has_value()) { auto received_length = result.value(); }
+		//   else { auto error = result.error(); }
+		// ```
+		//
+		// If `MakeNonBlocking()` is called, `non_block` is ignored
+		tl::expected<size_t, std::shared_ptr<const SocketError>> Recv(void *data, size_t length, const bool non_block = false);
 
 		// If MakeNonBlocking() is called, non_block is ignored
 		std::shared_ptr<const SocketError> RecvFrom(std::shared_ptr<Data> &data, SocketAddressPair *address_pair, const bool non_block = false);
@@ -454,8 +471,6 @@ namespace ov
 		ssize_t SendInternal(const std::shared_ptr<const Data> &data);
 		ssize_t SendToInternal(const SocketAddress &address, const std::shared_ptr<const Data> &data);
 		ssize_t SendFromToInternal(const SocketAddressPair &address_pair, const std::shared_ptr<const Data> &data);
-
-		std::shared_ptr<SocketError> RecvInternal(void *data, size_t length, size_t *received_length);
 
 		virtual String ToString(const char *class_name) const;
 

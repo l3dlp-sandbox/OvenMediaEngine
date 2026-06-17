@@ -631,7 +631,6 @@ namespace pvd
 	bool OvtStream::ReceivePacket(bool non_block)
 	{
 		uint8_t buffer[65535];
-		size_t read_bytes = 0ULL;
 
 		auto client_socket = _client_socket;
 		if (client_socket == nullptr)
@@ -640,28 +639,20 @@ namespace pvd
 			return false;
 		}
 
-		auto error = client_socket->Recv(buffer, 65535, &read_bytes, non_block);
+		auto result = client_socket->Recv(buffer, 65535, non_block);
+		if (result.has_value() == false)
+		{
+			logte("[%s/%s] An error occurred while receiving packet: %s", GetApplicationName(), GetName().CStr(), result.error()->What());
+			client_socket->Close();
+			return false;
+		}
+
+		auto read_bytes = result.value();
 		if (read_bytes == 0)
 		{
-			if (error != nullptr)
-			{
-				logte("[%s/%s] An error occurred while receiving packet: %s", GetApplicationName(), GetName().CStr(), error->What());
-				client_socket->Close();
-				return false;
-			}
-			else
-			{
-				if (non_block == true)
-				{
-					// retry later
-					return true;
-				}
-				else
-				{
-					// timeout
-					return false;
-				}
-			}
+			// No data available right now - retry later. A real error/disconnect arrives
+			// as a failed result and is handled above, so `0` is never fatal here.
+			return true;
 		}
 
 		if (_depacketizer.AppendPacket(buffer, read_bytes) == false)

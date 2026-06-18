@@ -518,6 +518,7 @@ bool LLHlsStream::IsSupportedMediaCodec(cmn::MediaCodecId codec_id) const
 	{
 		case cmn::MediaCodecId::H264:
 		case cmn::MediaCodecId::H265:
+		case cmn::MediaCodecId::Av1:
 		case cmn::MediaCodecId::Aac:
 		case cmn::MediaCodecId::WebVTT:
 			return true;
@@ -1457,7 +1458,6 @@ bool LLHlsStream::AddPackager(const std::shared_ptr<const MediaTrack> &media_tra
 			cenc_property.scheme = bmff::CencProtectScheme::None;
 			// Not yet support for other codec
 			logte("LLHlsStream::AddPackager() - CENC is not supported for this codec(%s), this track will be excluded from CENC protection", cmn::GetCodecIdString(media_track->GetCodecId()));
-			_cenc_property.scheme = bmff::CencProtectScheme::None;
 		}
 	}
 

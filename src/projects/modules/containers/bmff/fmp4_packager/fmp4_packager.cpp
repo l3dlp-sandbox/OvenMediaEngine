@@ -12,6 +12,8 @@
 
 #include <modules/bitstream/nalu/nal_stream_converter.h>
 #include <modules/bitstream/aac/aac_converter.h>
+#include <modules/bitstream/av1/av1_parser.h>
+#include <modules/bitstream/av1/av1_types.h>
 
 #include <base/modules/data_format/id3v2/id3v2.h>
 #include <base/modules/data_format/id3v2/frames/id3v2_text_frame.h>
@@ -57,9 +59,10 @@ namespace bmff
 			return false;
 		}
 
-		if (track->GetCodecId() == cmn::MediaCodecId::H264 || 
-			track->GetCodecId() == cmn::MediaCodecId::H265 ||
-			track->GetCodecId() == cmn::MediaCodecId::Aac)
+		if ((track->GetCodecId() == cmn::MediaCodecId::H264) ||
+			(track->GetCodecId() == cmn::MediaCodecId::H265) ||
+			(track->GetCodecId() == cmn::MediaCodecId::Av1) ||
+			(track->GetCodecId() == cmn::MediaCodecId::Aac))
 		{
 			// Supported codecs
 		}
@@ -586,7 +589,57 @@ namespace bmff
 		}
 		else if (media_packet->GetBitstreamFormat() == cmn::BitstreamFormat::AAC_RAW)
 		{
+		}
+		else if (media_packet->GetBitstreamFormat() == cmn::BitstreamFormat::AV1_OBU)
+		{
+			// AV1 ISOBMFF v1.3.0 section 2.4:
+			// - OBU_TEMPORAL_DELIMITER, OBU_PADDING, and OBU_REDUNDANT_FRAME_HEADER
+			//   SHOULD NOT be used. We strip temporal delimiters here; padding and
+			//   redundant frame headers are not expected from our encoder pipeline.
+			// - obu_has_size_field SHALL be 1 for every OBU except the last in a sample,
+			//   which MAY omit it. `Av1Parser::ReadObu()` handles both cases: an unsized
+			//   TemporalDelimiter has an empty payload, and any other unsized OBU takes
+			//   the remainder of the buffer (so it is necessarily the terminal OBU).
+			auto data		   = media_packet->GetData();
+			const auto *base   = data->GetDataAs<uint8_t>();
+			const size_t total = data->GetLength();
 
+			if (total == 0)
+			{
+				return nullptr;
+			}
+
+			// Walk the OBUs once, copying everything except temporal delimiters. `ReadObu()`
+			// returns false on malformed input and tolerates a missing size field on the
+			// terminal OBU, so no separate size-field validation pass is needed.
+			auto filtered = std::make_shared<ov::Data>(total);
+			size_t offset = 0;
+			Av1ObuSpan obu;
+
+			while (offset < total)
+			{
+				if (Av1Parser::ReadObu(base, total, offset, obu) == false)
+				{
+					logte("FMP4Packager::ConvertBitstreamFormat() - Failed to parse AV1 OBU at offset %zu", offset);
+					return nullptr;
+				}
+
+				if (obu.header.type != Av1ObuType::TemporalDelimiter)
+				{
+					filtered->Append(base + obu.obu_offset, obu.next_offset - obu.obu_offset);
+				}
+
+				offset = obu.next_offset;
+			}
+
+			if (filtered->GetLength() == 0)
+			{
+				return nullptr;
+			}
+
+			auto new_packet = std::make_shared<MediaPacket>(*media_packet);
+			new_packet->SetData(filtered);
+			converted_packet = new_packet;
 		}
 		else
 		{
@@ -602,7 +655,31 @@ namespace bmff
 
 		stream.WriteText("iso6"); // major brand
 		stream.WriteBE32(0); // minor version
-		stream.WriteText("iso6mp42avc1dashhlsfaid3"); // compatible brands
+		stream.WriteText("iso6mp42");  // compatible brands
+
+		{
+			switch (GetMediaTrack()->GetCodecId())
+			{
+				case cmn::MediaCodecId::H264:
+					stream.WriteText("avc1");
+					break;
+
+				case cmn::MediaCodecId::H265:
+					// Must match the sample entry fourcc written by `WriteHvc1Box()` (`hev1`)
+					stream.WriteText("hev1");
+					break;
+
+				case cmn::MediaCodecId::Av1:
+					stream.WriteText("av01");
+					break;
+
+				default:
+					// Non-video tracks (e.g. AAC) carry no video codec brand
+					break;
+			}
+		}
+
+		stream.WriteText("dashhlsfaid3");
 
 		// stream.WriteText("mp42"); // major brand
 		// stream.WriteBE32(0); // minor version

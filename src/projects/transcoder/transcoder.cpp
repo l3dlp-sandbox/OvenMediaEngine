@@ -48,32 +48,84 @@ bool Transcoder::Start()
 		const auto &config_path = cfg::ConfigManager::GetInstance()->GetConfigPath();
 
 		std::vector<std::pair<ov::String, std::vector<int32_t>>> preload_models;
+
+		// A <Devices> token must be a plain non-negative integer (an OME device index).
+		auto is_numeric = [](const ov::String &value) -> bool {
+			if (value.IsEmpty())
+			{
+				return false;
+			}
+			for (const char *p = value.CStr(); *p != '\0'; ++p)
+			{
+				if (*p < '0' || *p > '9')
+				{
+					return false;
+				}
+			}
+			return true;
+		};
+
 		for (const auto &entry : whisper_cfg.GetPreloadModels())
 		{
 			ov::String resolved = ov::GetFilePath(entry.GetPath(), config_path);
 
-			// Parse <Devices>:
-			// - Omitted/empty → device 0 (default)
-			// - "all" → empty list passed to Preload (= load on every available GPU)
-			// - "0,1" etc → specific device indices
+			// Parse <Devices> as OME device indices (the same namespace as
+			// <Modules>nv:N), then map each to its CUDA device id. This keeps the
+			// preloaded context and the per-stream STT encoder on the same GPU,
+			// since OME and CUDA device ordering can differ (e.g. CUDA orders by
+			// performance, OME by PCI bus).
+			// - Omitted/empty → OME device 0 (default)
+			// - "all" → load on every available GPU
+			// - "0,1" etc → specific OME device indices
+			const ov::String devices_str = entry.GetDevices().Trim();
+			const bool load_all = devices_str.LowerCaseString() == "all";
+
 			std::vector<int32_t> device_ids;
-			const ov::String &devices_str = entry.GetDevices();
 			if (devices_str.IsEmpty())
 			{
-				device_ids.push_back(0);
+				// Default: OME device 0 (GetExternalDeviceId returns -1 if unavailable).
+				int32_t cuda_id = TranscodeGPU::GetInstance()->GetExternalDeviceId(cmn::MediaCodecModuleId::NVENC, 0);
+				if (cuda_id >= 0)
+				{
+					device_ids.push_back(cuda_id);
+				}
 			}
-			else if (devices_str.LowerCaseString() != "all")
+			else if (load_all == false)
 			{
 				for (const auto &token : devices_str.Split(","))
 				{
 					ov::String trimmed = token.Trim();
-					if (!trimmed.IsEmpty())
+					if (trimmed.IsEmpty())
 					{
-						device_ids.push_back(ov::Converter::ToInt32(trimmed));
+						// e.g. a trailing comma in "0,1," — ignore quietly.
+						continue;
 					}
+					if (is_numeric(trimmed) == false || trimmed.GetLength() > 9)
+					{
+						// Non-numeric, or too many digits to be a valid int32 device index.
+						logtw("Whisper preload: ignoring invalid device id \"%s\" in Devices(\"%s\"). path=%s", trimmed.CStr(), devices_str.CStr(), resolved.CStr());
+						continue;
+					}
+
+					int32_t cuda_id = TranscodeGPU::GetInstance()->GetExternalDeviceId(
+						cmn::MediaCodecModuleId::NVENC, ov::Converter::ToInt32(trimmed));
+					if (cuda_id < 0)
+					{
+						logtw("Whisper preload: OME device id %s is not an available NVIDIA device, skipping. path=%s", trimmed.CStr(), resolved.CStr());
+						continue;
+					}
+					device_ids.push_back(cuda_id);
 				}
 			}
-			// "all" → device_ids remains empty → Preload loads on all available GPUs
+
+			// Only "all" loads on every GPU (empty device_ids). If a specific or
+			// default selection resolved nothing, skip the model rather than letting
+			// an empty list fall through to "all".
+			if (load_all == false && device_ids.empty())
+			{
+				logtw("Whisper preload: no usable GPU resolved from Devices(\"%s\"), skipping model. path=%s", devices_str.CStr(), resolved.CStr());
+				continue;
+			}
 
 			preload_models.emplace_back(std::move(resolved), std::move(device_ids));
 		}

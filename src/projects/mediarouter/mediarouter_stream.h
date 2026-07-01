@@ -32,7 +32,7 @@ static constexpr int64_t MEDIA_ROUTE_STREAM_TRACK_PREPARE_TIMEOUT_MS = 3000;
 class MediaRouteStream : public MediaRouterNormalize, public MediaRouterStats, public MediaRouterEventGenerator, public MediaRouterAlert
 {
 public:
-	MediaRouteStream(const std::shared_ptr<info::Stream> &stream, cmn::MediaRouterStreamType type);
+	MediaRouteStream(const std::shared_ptr<info::Stream> &stream, cmn::MediaRouterStreamType type, uint32_t worker_id);
 	~MediaRouteStream();
 
 	// Inout Stream Type
@@ -71,6 +71,9 @@ public:
 	// Query original stream information
 	std::shared_ptr<info::Stream> GetStream();
 
+	// MediaRouter worker assigned round-robin at construction, immutable for the stream's life.
+	uint32_t GetWorkerID() const { return _worker_id; }
+
 	void OnStreamPrepared(bool completed);
 	bool IsStreamPrepared();
 	bool IsStreamReady();
@@ -93,6 +96,8 @@ private:
 
 	// Incoming/Outgoing Stream
 	cmn::MediaRouterStreamType _type;
+
+	const uint32_t _worker_id;
 
 	// Stream Information
 	std::shared_ptr<info::Stream> _stream = nullptr;

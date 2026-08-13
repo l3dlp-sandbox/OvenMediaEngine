@@ -50,7 +50,7 @@ FROM    base_build AS build
 WORKDIR /tmp
 
 ARG     USE_GPU
-ARG     OME_VERSION=v0.21.0
+ARG     OME_VERSION=master
 ARG     USE_LOCAL=false
 ARG     STRIP=true
 ARG     OME_ENABLE_JEMALLOC_LG_PAGE_MAX=false

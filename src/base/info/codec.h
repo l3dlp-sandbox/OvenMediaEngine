@@ -115,7 +115,7 @@ namespace info
 			return _metrics;
 		}
 
-		std::vector<cmn::MediaCodecId> GetSupportedCodecs() const
+		const std::vector<cmn::MediaCodecId> &GetSupportedCodecs() const
 		{
 			return _supported_codecs;
 		}
@@ -142,15 +142,7 @@ namespace info
 
 		ov::String GetInfoString() const
 		{
-			ov::String supported_codecs;
-			for (const auto &codec : _supported_codecs)
-			{
-				if (supported_codecs.IsEmpty() == false)
-				{
-					supported_codecs.Append(",");
-				}
-				supported_codecs.Append(cmn::GetCodecIdString(codec));
-			}
+			ov::String supported_codecs = cmn::GetCodecIdListString(_supported_codecs);
 
 			ov::String metrics = ov::String::FormatString("dec%2d,enc%2d",
 														  _metrics._active_decoder,

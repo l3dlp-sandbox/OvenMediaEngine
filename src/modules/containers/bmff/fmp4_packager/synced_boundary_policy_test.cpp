@@ -420,6 +420,10 @@ TEST(ReferenceBoundaryPolicyTest, BoundaryFollowsTheSegmentStart)
 {
 	auto policy = MakeReference(30.0, 7);
 
+	// The aimed positions start where the stream's first segment did; this one
+	// opened at zero, so they fall on plain multiples of the segment duration
+	PlanAt(policy, 0.0);
+
 	// Unknown start: only the numbering is planned. The planned boundaries sit
 	// a microsecond under the true position so a rounding ulp cannot push the
 	// cut past the intended frame.
@@ -439,9 +443,39 @@ TEST(ReferenceBoundaryPolicyTest, BoundaryFollowsTheSegmentStart)
 	EXPECT_NEAR(PlanAt(policy, 3900.0).end_us, 4000000.0, 10.0);
 }
 
+TEST(ReferenceBoundaryPolicyTest, BoundariesStartWhereTheStreamDid)
+{
+	auto policy = MakeReference(30.0);
+
+	// A stream whose timeline opens away from zero: its frames sit at that
+	// offset, so the aimed positions start there instead of on multiples of
+	// the segment duration
+	EXPECT_NEAR(PlanAt(policy, 500.0).end_us, 4500000.0, 10.0);
+
+	// and keep the segment duration between them
+	EXPECT_NEAR(PlanAt(policy, 5000.0).end_us, 8500000.0, 10.0);
+
+	// A segment starting at a marker cut targets the same one, so the track
+	// returns to the cadence by itself here too
+	EXPECT_NEAR(PlanAt(policy, 6000.0).end_us, 8500000.0, 10.0);
+}
+
+TEST(ReferenceBoundaryPolicyTest, ATimelineBelowZeroFixesTheOriginToo)
+{
+	auto policy = MakeReference(30.0);
+
+	// A first start below zero is a position like any other, so the aimed
+	// positions follow it instead of counting from zero
+	EXPECT_NEAR(PlanAt(policy, -500.0).end_us, 3500000.0, 10.0);
+	EXPECT_NEAR(PlanAt(policy, 4000.0).end_us, 7500000.0, 10.0);
+}
+
 TEST(ReferenceBoundaryPolicyTest, PublishesRealizedBoundaries)
 {
 	auto policy = MakeReference();
+
+	// The stream's first segment opened at zero, so the aimed positions start there
+	PlanAt(policy, 0.0);
 
 	// A marker cut completed the segment early, at 1400
 	Complete(policy, 5, 0.0, 1400.0);

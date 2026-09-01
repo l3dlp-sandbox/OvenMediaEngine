@@ -38,6 +38,7 @@ namespace pvd
         auto config = GetConfig().GetProviders().GetScheduledProvider();
         _media_root_dir = ov::GetDirPath(config.GetMediaRootDir(), cfg::ConfigManager::GetInstance()->GetConfigPath());
         _schedule_files_path = ov::GetDirPath(config.GetScheduleFilesDir(), cfg::ConfigManager::GetInstance()->GetConfigPath());
+        _preserve_removed_schedule_file = config.IsPreserveRemovedScheduleFile();
 
         _schedule_file_name_regex = ov::Regex::CompiledRegex(ov::Regex::WildCardRegex(ov::String::FormatString("*.%s", ScheduleFileExtension)));
         
@@ -103,7 +104,7 @@ namespace pvd
                 std::shared_ptr<info::Stream> deleted_stream_info;
 				if (RemoveSchedule(schedule_file_info, &deleted_stream_info) == true)
 				{
-					logti("Removed schedule channel : %s/%s (%s)", GetVHostAppName().CStr(), schedule_file_info._schedule->GetStream()._name.CStr(), schedule_file_info._file_path.CStr());
+					logti("Removed schedule channel : %s/%s (%s) - the schedule file has been removed", GetVHostAppName().CStr(), schedule_file_info._schedule->GetStream()._name.CStr(), schedule_file_info._file_path.CStr());
 
 					it = _schedule_file_info_db.erase(it);
 				}
@@ -111,6 +112,37 @@ namespace pvd
 				{
 					++it;
 				}
+            }
+            else
+            {
+                ++it;
+            }
+        }
+
+        // Remove channels that stayed in fallback longer than MaxFallbackDurationMs
+        for (auto it = _schedule_file_info_db.begin(); it != _schedule_file_info_db.end();)
+        {
+            auto &schedule_file_info = it->second;
+            auto stream = std::static_pointer_cast<ScheduledStream>(GetStreamByName(schedule_file_info._schedule->GetStream()._name));
+            if (stream == nullptr || stream->IsMaxFallbackDurationExceeded() == false)
+            {
+                ++it;
+                continue;
+            }
+
+            // Same as deleting the channel via the DELETE API. If the file were left as is, the channel would be recreated on the next tick, so remove the channel only when its file is removed
+            if (RemoveScheduleFile(schedule_file_info._file_path, _preserve_removed_schedule_file) == false)
+            {
+                logtw("Failed to remove schedule file, will retry on the next tick : %s", schedule_file_info._file_path.CStr());
+                ++it;
+                continue;
+            }
+
+            if (RemoveSchedule(schedule_file_info) == true)
+            {
+                logti("Removed schedule channel : %s/%s (%s) - fallback lasted longer than MaxFallbackDurationMs", GetVHostAppName().CStr(), schedule_file_info._schedule->GetStream()._name.CStr(), schedule_file_info._file_path.CStr());
+
+                it = _schedule_file_info_db.erase(it);
             }
             else
             {

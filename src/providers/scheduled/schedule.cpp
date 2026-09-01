@@ -10,6 +10,7 @@
 #include "schedule.h"
 #include "schedule_private.h"
 #include <base/ovlibrary/files.h>
+#include <modules/task_pool/task_pool.h>
 
 #include <cerrno>
 #include <chrono>
@@ -115,10 +116,22 @@ namespace pvd
 
 		ov::String file_path_copy = _file_path;
 		_format_context.reset(ctx, [file_path_copy](AVFormatContext *ctx) {
-			if (ctx)
+			if (ctx == nullptr)
 			{
+				return;
+			}
+
+			// Closing can block on the storage the file lives on, so it goes to a dedicated
+			// worker instead of the releasing thread (normally the playback thread) or the
+			// shared workers. When the pool cannot take it, the close runs right here.
+			auto close = [ctx, file_path_copy]() mutable {
 				logti("LoadContext: Closing format context : %s", file_path_copy.CStr());
 				::avformat_close_input(&ctx);
+			};
+
+			if (ov::TaskPool::GetInstance()->PostDedicated("SchedCtxClose", close) == false)
+			{
+				close();
 			}
 		});
 
